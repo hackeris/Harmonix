@@ -1,0 +1,262 @@
+From 1e007927bc89674c202e9f668a1d3ac1518e9233 Mon Sep 17 00:00:00 2001
+From: hackeris <hackeris@qq.com>
+Date: Sat, 5 Jul 2025 17:28:06 +0800
+Subject: [PATCH] simulate proot for execve syscall
+
+---
+ include/qemu/path.h      |  1 +
+ linux-user/Makefile.objs |  1 +
+ linux-user/execve.c      | 37 ++++++++++++++++++++++++++++
+ linux-user/execve.h      |  9 +++++++
+ linux-user/main.c        |  2 ++
+ linux-user/syscall.c     | 42 +++++++++++++++++++++++++++++++-
+ util/path.c              | 52 ++++++++++++++++++++++++++++++++++++----
+ 7 files changed, 138 insertions(+), 6 deletions(-)
+ create mode 100644 linux-user/execve.c
+ create mode 100644 linux-user/execve.h
+
+diff --git a/include/qemu/path.h b/include/qemu/path.h
+index c6292a9..00a6f39 100644
+--- a/include/qemu/path.h
++++ b/include/qemu/path.h
+@@ -3,5 +3,6 @@
+ 
+ void init_paths(const char *prefix);
+ const char *path(const char *pathname);
++char* resolve_path(const char* path_env, const char* name, char* out);
+ 
+ #endif
+diff --git a/linux-user/Makefile.objs b/linux-user/Makefile.objs
+index 1940910..6df7665 100644
+--- a/linux-user/Makefile.objs
++++ b/linux-user/Makefile.objs
+@@ -1,5 +1,6 @@
+ obj-y = main.o syscall.o strace.o mmap.o signal.o \
+ 	elfload.o linuxload.o uaccess.o uname.o \
++	execve.o \
+ 	safe-syscall.o $(TARGET_ABI_DIR)/signal.o \
+         $(TARGET_ABI_DIR)/cpu_loop.o exit.o fd-trans.o
+ 
+diff --git a/linux-user/execve.c b/linux-user/execve.c
+new file mode 100644
+index 0000000..3168b85
+--- /dev/null
++++ b/linux-user/execve.c
+@@ -0,0 +1,37 @@
++#include "execve.h"
++
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++#include <linux/limits.h>
++
++char qemu_abs_path[PATH_MAX];
++
++const char **argv_prefix;
++
++void setup_for_execve(const char **argv, int optind) {
++
++    const char *qemu = argv[0];
++    if (qemu[0] != '/') {
++        getcwd(qemu_abs_path, PATH_MAX);
++        strcat(qemu_abs_path, "/");
++        strcat(qemu_abs_path, qemu);
++    } else {
++        strcat(qemu_abs_path, qemu);
++    }
++
++    argv_prefix = calloc(optind + 1, sizeof(char *));
++    argv_prefix[0] = qemu_abs_path;
++    for (int i = 1; i < optind; i++) {
++        argv_prefix[i] = argv[i];
++    }
++    argv_prefix[optind] = NULL;
++}
++
++const char *get_qemu_abs_path(void) {
++    return qemu_abs_path;
++}
++
++const char **get_qemu_argv_prefix(void) {
++    return argv_prefix;
++}
+diff --git a/linux-user/execve.h b/linux-user/execve.h
+new file mode 100644
+index 0000000..83f35b1
+--- /dev/null
++++ b/linux-user/execve.h
+@@ -0,0 +1,9 @@
++#ifndef _EXECVE_H
++#define _EXECVE_H
++
++void setup_for_execve(const char** argv, int optind);
++
++const char* get_qemu_abs_path(void);
++const char** get_qemu_argv_prefix();
++
++#endif
+diff --git a/linux-user/main.c b/linux-user/main.c
+index 22578b1..c6f2126 100644
+--- a/linux-user/main.c
++++ b/linux-user/main.c
+@@ -45,6 +45,7 @@
+ #include "trace/control.h"
+ #include "target_elf.h"
+ #include "cpu_loop-common.h"
++#include "execve.h"
+ #include "crypto/init.h"
+ 
+ char *exec_path;
+@@ -661,6 +662,7 @@ int main(int argc, char **argv, char **envp)
+     qemu_plugin_add_opts();
+ 
+     optind = parse_args(argc, argv);
++    setup_for_execve(argv, optind);
+ 
+     log_mask = last_log_mask | (enable_strace ? LOG_STRACE : 0);
+     if (log_mask) {
+diff --git a/linux-user/syscall.c b/linux-user/syscall.c
+index 3a376f1..a8e3400 100644
+--- a/linux-user/syscall.c
++++ b/linux-user/syscall.c
+@@ -112,6 +112,8 @@
+ #include <linux/if_alg.h>
+ #include <linux/rtc.h>
+ #include <sound/asound.h>
++
++#include "execve.h"
+ #include "linux_loop.h"
+ #include "uname.h"
+ 
+@@ -6089,6 +6091,44 @@ static int do_fork(CPUArchState *env, unsigned int flags, abi_ulong newsp,
+     return ret;
+ }
+ 
++static int do_execve(char *p, const char **argp, const char **envp) {
++
++    int argc = 0;
++    while (argp[argc] != NULL) { argc++; }
++
++    const char* qemu = get_qemu_abs_path();
++    const char** argv_prefix = get_qemu_argv_prefix();
++
++    int n_prefix = 0;
++    while (argv_prefix[n_prefix] != NULL) { n_prefix += 1; }
++
++    const char **new_argv = g_new0(char *, n_prefix + argc + 1);
++    memcpy(new_argv, argv_prefix, n_prefix * sizeof(char*));
++    memcpy(&new_argv[n_prefix], argp, (argc + 1) * sizeof(char *));
++
++    if (new_argv[n_prefix][0] != '/') {
++        const char **pathenv = envp;
++        while (*pathenv != NULL && strstr(*pathenv, "PATH=") != *pathenv) {
++            pathenv += 1;
++        }
++
++        if (pathenv != NULL) {
++            char prog[PATH_MAX] = {0};
++            if (resolve_path((*pathenv) + 5, new_argv[n_prefix], prog)) {
++                new_argv[n_prefix] = path(prog);
++            }
++        }
++    } else {
++        new_argv[n_prefix] = path(new_argv[n_prefix]);
++    }
++
++    int ret = safe_execve(qemu, new_argv, envp);
++
++    g_free(new_argv);
++
++    return ret;
++}
++
+ /* warning : doesn't handle linux specific flags... */
+ static int target_to_host_fcntl_cmd(int cmd)
+ {
+@@ -7888,7 +7928,7 @@ static abi_long do_syscall1(void *cpu_env, int num, abi_long arg1,
+              * before the execve completes and makes it the other
+              * program's problem.
+              */
+-            ret = get_errno(safe_execve(p, argp, envp));
++            ret = get_errno(do_execve(path(p), argp, envp));
+             unlock_user(p, arg1, 0);
+ 
+             goto execve_end;
+diff --git a/util/path.c b/util/path.c
+index 8e174eb..2c1971f 100644
+--- a/util/path.c
++++ b/util/path.c
+@@ -38,19 +38,26 @@ const char *path(const char *name)
+     gpointer key, value;
+     const char *ret;
+ 
+-    /* Only do absolute paths: quick and dirty, but should mostly be OK.  */
++    char abspath[PATH_MAX];
++
+     if (!base || !name || name[0] != '/') {
+-        return name;
++        getcwd(abspath, sizeof(abspath));
++        strcat(abspath, "/");
++        strcat(abspath, name);
++    } else if (strcmp(name, "/") == 0) {
++        return base;
++    } else {
++        strcpy(abspath, name);
+     }
+ 
+     qemu_mutex_lock(&lock);
+ 
+     /* Have we looked up this file before?  */
+-    if (g_hash_table_lookup_extended(hash, name, &key, &value)) {
++    if (g_hash_table_lookup_extended(hash, abspath, &key, &value)) {
+         ret = value ? value : name;
+     } else {
+-        char *save = g_strdup(name);
+-        char *full = g_build_filename(base, name, NULL);
++        char *save = g_strdup(abspath);
++        char *full = g_build_filename(base, abspath, NULL);
+ 
+         /* Look for the path; record the result, pass or fail.  */
+         if (access(full, F_OK) == 0) {
+@@ -68,3 +75,38 @@ const char *path(const char *name)
+     qemu_mutex_unlock(&lock);
+     return ret;
+ }
++
++char *resolve_path(const char *path_env, const char *name, char *out) {
++
++    if (!path_env || !name || !out) return NULL;
++
++    char *path_copy = strdup(path_env);
++    if (!path_copy) return NULL;
++
++    char *dir = strtok(path_copy, ":");
++    char full_path[PATH_MAX];
++
++    while (dir) {
++        if (name[0] == '/') {
++            if (access(path(name), F_OK) == 0) {
++                strncpy(out, name, PATH_MAX);
++                free(path_copy);
++                return out;
++            }
++            break;
++        }
++
++        snprintf(full_path, sizeof(full_path), "%s/%s", dir, name);
++
++        if (access(path(full_path), F_OK) == 0) {
++            strncpy(out, full_path, PATH_MAX);
++            free(path_copy);
++            return out;
++        }
++
++        dir = strtok(NULL, ":");
++    }
++
++    free(path_copy);
++    return NULL;
++}
+-- 
+2.43.0
+

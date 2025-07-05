@@ -1,0 +1,157 @@
+diff --git a/accel/tcg/translate-all.c b/accel/tcg/translate-all.c
+index 9924e66..b0d1ec7 100644
+--- a/accel/tcg/translate-all.c
++++ b/accel/tcg/translate-all.c
+@@ -1041,7 +1041,7 @@ static inline void *alloc_code_gen_buffer(void)
+ #else
+ static inline void *alloc_code_gen_buffer(void)
+ {
+-    int prot = PROT_WRITE | PROT_READ | PROT_EXEC;
++    int prot = PROT_WRITE | PROT_READ;
+     int flags = MAP_PRIVATE | MAP_ANONYMOUS;
+     size_t size = tcg_ctx->code_gen_buffer_size;
+     void *buf;
+diff --git a/linux-user/aarch64/syscall_nr.h b/linux-user/aarch64/syscall_nr.h
+index 85de000..def6a25 100644
+--- a/linux-user/aarch64/syscall_nr.h
++++ b/linux-user/aarch64/syscall_nr.h
+@@ -186,12 +186,6 @@
+ #define TARGET_NR_getegid 177
+ #define TARGET_NR_gettid 178
+ #define TARGET_NR_sysinfo 179
+-#define TARGET_NR_mq_open 180
+-#define TARGET_NR_mq_unlink 181
+-#define TARGET_NR_mq_timedsend 182
+-#define TARGET_NR_mq_timedreceive 183
+-#define TARGET_NR_mq_notify 184
+-#define TARGET_NR_mq_getsetattr 185
+ #define TARGET_NR_msgget 186
+ #define TARGET_NR_msgctl 187
+ #define TARGET_NR_msgrcv 188
+diff --git a/linux-user/elfload.c b/linux-user/elfload.c
+index 619c054..558df4d 100644
+--- a/linux-user/elfload.c
++++ b/linux-user/elfload.c
+@@ -2464,7 +2464,6 @@ static void load_elf_image(const char *image_name, int image_fd,
+ 
+             if (eppnt->p_flags & PF_R) elf_prot =  PROT_READ;
+             if (eppnt->p_flags & PF_W) elf_prot |= PROT_WRITE;
+-            if (eppnt->p_flags & PF_X) elf_prot |= PROT_EXEC;
+ 
+             vaddr = load_bias + eppnt->p_vaddr;
+             vaddr_po = TARGET_ELF_PAGEOFFSET(vaddr);
+@@ -2495,7 +2494,7 @@ static void load_elf_image(const char *image_name, int image_fd,
+             }
+ 
+             /* Find the full program boundaries.  */
+-            if (elf_prot & PROT_EXEC) {
++            if (eppnt->p_flags & PF_X) {
+                 if (vaddr < info->start_code) {
+                     info->start_code = vaddr;
+                 }
+@@ -2874,7 +2873,7 @@ int load_elf_binary(struct linux_binprm *bprm, struct image_info *info)
+                and some applications "depend" upon this behavior.  Since
+                we do not have the power to recompile these, we emulate
+                the SVr4 behavior.  Sigh.  */
+-            target_mmap(0, qemu_host_page_size, PROT_READ | PROT_EXEC,
++            target_mmap(0, qemu_host_page_size, PROT_READ,
+                         MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+         }
+ #ifdef TARGET_MIPS
+diff --git a/linux-user/host/aarch64/hostdep.h b/linux-user/host/aarch64/hostdep.h
+index a8d41a2..34d934f 100644
+--- a/linux-user/host/aarch64/hostdep.h
++++ b/linux-user/host/aarch64/hostdep.h
+@@ -25,7 +25,7 @@ extern char safe_syscall_end[];
+ static inline void rewind_if_in_safe_syscall(void *puc)
+ {
+     ucontext_t *uc = puc;
+-    __u64 *pcreg = &uc->uc_mcontext.pc;
++    uint64_t *pcreg = &uc->uc_mcontext.pc;
+ 
+     if (*pcreg > (uintptr_t)safe_syscall_start
+         && *pcreg < (uintptr_t)safe_syscall_end) {
+diff --git a/linux-user/linuxload.c b/linux-user/linuxload.c
+index a27e1d0..eccf8db 100644
+--- a/linux-user/linuxload.c
++++ b/linux-user/linuxload.c
+@@ -45,9 +45,6 @@ static int prepare_binprm(struct linux_binprm *bprm)
+     if(!S_ISREG(mode)) {	/* Must be regular file */
+         return(-EACCES);
+     }
+-    if(!(mode & 0111)) {	/* Must have at least one execute bit set */
+-        return(-EACCES);
+-    }
+ 
+     bprm->e_uid = geteuid();
+     bprm->e_gid = getegid();
+diff --git a/linux-user/signal.c b/linux-user/signal.c
+index 8cf51ff..8fc7532 100644
+--- a/linux-user/signal.c
++++ b/linux-user/signal.c
+@@ -38,7 +38,6 @@ static void host_signal_handler(int host_signum, siginfo_t *info,
+  * Signal number 0 is reserved for use as kill(pid, 0), to test whether
+  * a process exists without sending it a signal.
+  */
+-QEMU_BUILD_BUG_ON(__SIGRTMAX + 1 != _NSIG);
+ static uint8_t host_to_target_signal_table[_NSIG] = {
+     [SIGHUP] = TARGET_SIGHUP,
+     [SIGINT] = TARGET_SIGINT,
+@@ -222,7 +221,6 @@ int do_sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
+ 
+         switch (how) {
+         case SIG_BLOCK:
+-            sigorset(&ts->signal_mask, &ts->signal_mask, set);
+             break;
+         case SIG_UNBLOCK:
+             for (i = 1; i <= NSIG; ++i) {
+@@ -953,8 +951,6 @@ static void handle_pending_signal(CPUArchState *cpu_env, int sig,
+     } else if (handler == TARGET_SIG_ERR) {
+         dump_core_and_abort(sig);
+     } else {
+-        /* compute the blocked signals during the handler execution */
+-        sigset_t *blocked_set;
+ 
+         target_to_host_sigset(&set, &sa->sa_mask);
+         /* SA_NODEFER indicates that the current signal should not be
+@@ -966,10 +962,6 @@ static void handle_pending_signal(CPUArchState *cpu_env, int sig,
+            end of the signal execution (see do_sigreturn) */
+         host_to_target_sigset_internal(&target_old_set, &ts->signal_mask);
+ 
+-        /* block signals in the handler */
+-        blocked_set = ts->in_sigsuspend ?
+-            &ts->sigsuspend_mask : &ts->signal_mask;
+-        sigorset(&ts->signal_mask, blocked_set, &set);
+         ts->in_sigsuspend = 0;
+ 
+         /* if the CPU is in VM86 mode, we restore the 32 bit values */
+diff --git a/linux-user/syscall.c b/linux-user/syscall.c
+index 05f0391..1351c7e 100644
+--- a/linux-user/syscall.c
++++ b/linux-user/syscall.c
+@@ -6188,8 +6188,6 @@ static int target_to_host_fcntl_cmd(int cmd)
+     TRANSTBL_CONVERT(F_RDLCK); \
+     TRANSTBL_CONVERT(F_WRLCK); \
+     TRANSTBL_CONVERT(F_UNLCK); \
+-    TRANSTBL_CONVERT(F_EXLCK); \
+-    TRANSTBL_CONVERT(F_SHLCK); \
+     }
+ 
+ static int target_to_host_flock(int type)
+@@ -6791,7 +6789,6 @@ static inline abi_long target_to_host_sigevent(struct sigevent *host_sevp,
+     host_sevp->sigev_signo =
+         target_to_host_signal(tswap32(target_sevp->sigev_signo));
+     host_sevp->sigev_notify = tswap32(target_sevp->sigev_notify);
+-    host_sevp->_sigev_un._tid = tswap32(target_sevp->_sigev_un._tid);
+ 
+     unlock_user_struct(target_sevp, target_addr, 1);
+     return 0;
+@@ -9513,8 +9510,6 @@ static abi_long do_syscall1(void *cpu_env, int num, abi_long arg1,
+         }
+         return ret;
+ #endif
+-    case TARGET_NR_vhangup:
+-        return get_errno(vhangup());
+ #ifdef TARGET_NR_syscall
+     case TARGET_NR_syscall:
+         return do_syscall(cpu_env, arg1 & 0xffff, arg2, arg3, arg4, arg5,

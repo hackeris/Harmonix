@@ -1,0 +1,25 @@
+diff --git a/linux-user/x86_64/syscall_64.tbl b/linux-user/x86_64/syscall_64.tbl
+index 44d510b..90ea8b4 100644
+--- a/linux-user/x86_64/syscall_64.tbl
++++ b/linux-user/x86_64/syscall_64.tbl
+@@ -248,12 +248,6 @@
+ 237	common	mbind			__x64_sys_mbind
+ 238	common	set_mempolicy		__x64_sys_set_mempolicy
+ 239	common	get_mempolicy		__x64_sys_get_mempolicy
+-240	common	mq_open			__x64_sys_mq_open
+-241	common	mq_unlink		__x64_sys_mq_unlink
+-242	common	mq_timedsend		__x64_sys_mq_timedsend
+-243	common	mq_timedreceive		__x64_sys_mq_timedreceive
+-244	64	mq_notify		__x64_sys_mq_notify
+-245	common	mq_getsetattr		__x64_sys_mq_getsetattr
+ 246	64	kexec_load		__x64_sys_kexec_load
+ 247	64	waitid			__x64_sys_waitid
+ 248	common	add_key			__x64_sys_add_key
+@@ -381,7 +375,6 @@
+ 524	x32	rt_sigqueueinfo		__x32_compat_sys_rt_sigqueueinfo
+ 525	x32	sigaltstack		__x32_compat_sys_sigaltstack
+ 526	x32	timer_create		__x32_compat_sys_timer_create
+-527	x32	mq_notify		__x32_compat_sys_mq_notify
+ 528	x32	kexec_load		__x32_compat_sys_kexec_load
+ 529	x32	waitid			__x32_compat_sys_waitid
+ 530	x32	set_robust_list		__x32_compat_sys_set_robust_list

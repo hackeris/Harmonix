@@ -1,0 +1,249 @@
+diff --git a/accel/tcg/translate-all.c b/accel/tcg/translate-all.c
+index b0d1ec7..e02da31 100644
+--- a/accel/tcg/translate-all.c
++++ b/accel/tcg/translate-all.c
+@@ -2490,7 +2490,8 @@ int page_get_flags(target_ulong address)
+ /* Modify the flags of a page and invalidate the code if necessary.
+    The flag PAGE_WRITE_ORG is positioned automatically depending
+    on PAGE_WRITE.  The mmap_lock should already be held.  */
+-void page_set_flags(target_ulong start, target_ulong end, int flags)
++void page_set_flags(target_ulong start, target_ulong end, int flags,
++                    enum page_set_flags_mode mode)
+ {
+     target_ulong addr, len;
+ 
+@@ -2522,7 +2523,10 @@ void page_set_flags(target_ulong start, target_ulong end, int flags)
+             p->first_tb) {
+             tb_invalidate_phys_page(addr, 0);
+         }
+-        p->flags = flags;
++        if (mode == PAGE_SET_ALL_FLAGS)
++            p->flags = flags;
++        else /* PAGE_SET_PROTECTION */
++            p->flags |= (p->flags & ~(PAGE_BITS - 1)) | (flags & PAGE_BITS);
+     }
+ }
+ 
+diff --git a/bsd-user/mmap.c b/bsd-user/mmap.c
+index 17f4cd8..4bfac81 100644
+--- a/bsd-user/mmap.c
++++ b/bsd-user/mmap.c
+@@ -125,7 +125,7 @@ int target_mprotect(abi_ulong start, abi_ulong len, int prot)
+         if (ret != 0)
+             goto error;
+     }
+-    page_set_flags(start, start + len, prot | PAGE_VALID);
++    page_set_flags(start, start + len, prot, PAGE_SET_PROTECTION);
+     mmap_unlock();
+     return 0;
+ error:
+@@ -214,7 +214,7 @@ static abi_ulong mmap_find_vma(abi_ulong start, abi_ulong size)
+            to mmap.  */
+         page_set_flags(last_brk & TARGET_PAGE_MASK,
+                        TARGET_PAGE_ALIGN(new_brk),
+-                       PAGE_RESERVED);
++                       PAGE_RESERVED, PAGE_SET_ALL_FLAGS);
+     }
+     last_brk = new_brk;
+ 
+@@ -397,7 +397,7 @@ abi_long target_mmap(abi_ulong start, abi_ulong len, int prot,
+         }
+     }
+  the_end1:
+-    page_set_flags(start, start + len, prot | PAGE_VALID);
++    page_set_flags(start, start + len, prot | PAGE_VALID, PAGE_SET_ALL_FLAGS);
+  the_end:
+ #ifdef DEBUG_MMAP
+     printf("ret=0x" TARGET_FMT_lx "\n", start);
+@@ -460,7 +460,7 @@ int target_munmap(abi_ulong start, abi_ulong len)
+     }
+ 
+     if (ret == 0)
+-        page_set_flags(start, start + len, 0);
++        page_set_flags(start, start + len, 0, PAGE_SET_ALL_FLAGS);
+     mmap_unlock();
+     return ret;
+ }
+diff --git a/include/exec/cpu-all.h b/include/exec/cpu-all.h
+index 49384bb..8673a79 100644
+--- a/include/exec/cpu-all.h
++++ b/include/exec/cpu-all.h
+@@ -261,6 +261,9 @@ extern intptr_t qemu_host_page_mask;
+ /* FIXME: Code that sets/uses this is broken and needs to go away.  */
+ #define PAGE_RESERVED  0x0020
+ #endif
++#if defined(CONFIG_LINUX) && defined(CONFIG_USER_ONLY)
++#define PAGE_MAP_ANONYMOUS 0x0080
++#endif
+ 
+ #if defined(CONFIG_USER_ONLY)
+ void page_dump(FILE *f);
+@@ -269,8 +272,14 @@ typedef int (*walk_memory_regions_fn)(void *, target_ulong,
+                                       target_ulong, unsigned long);
+ int walk_memory_regions(void *, walk_memory_regions_fn);
+ 
++enum page_set_flags_mode {
++    PAGE_SET_ALL_FLAGS,
++    PAGE_SET_PROTECTION
++};
++
+ int page_get_flags(target_ulong address);
+-void page_set_flags(target_ulong start, target_ulong end, int flags);
++void page_set_flags(target_ulong start, target_ulong end, int flags,
++                   enum page_set_flags_mode mode);
+ int page_check_range(target_ulong start, target_ulong len, int flags);
+ #endif
+ 
+diff --git a/linux-user/elfload.c b/linux-user/elfload.c
+index 558df4d..d3b4548 100644
+--- a/linux-user/elfload.c
++++ b/linux-user/elfload.c
+@@ -1847,7 +1847,7 @@ static void zero_bss(abi_ulong elf_bss, abi_ulong last_bss, int prot)
+ 
+     /* Ensure that the bss page(s) are valid */
+     if ((page_get_flags(last_bss-1) & prot) != prot) {
+-        page_set_flags(elf_bss & TARGET_PAGE_MASK, last_bss, prot | PAGE_VALID);
++        page_set_flags(elf_bss & TARGET_PAGE_MASK, last_bss, prot, PAGE_SET_PROTECTION);
+     }
+ 
+     if (host_start < host_map_start) {
+diff --git a/linux-user/mmap.c b/linux-user/mmap.c
+index e378033..1af082a 100644
+--- a/linux-user/mmap.c
++++ b/linux-user/mmap.c
+@@ -116,7 +116,7 @@ int target_mprotect(abi_ulong start, abi_ulong len, int prot)
+         if (ret != 0)
+             goto error;
+     }
+-    page_set_flags(start, start + len, prot | PAGE_VALID);
++    page_set_flags(start, start + len, prot, PAGE_SET_PROTECTION);
+     mmap_unlock();
+     return 0;
+ error:
+@@ -364,6 +364,7 @@ abi_long target_mmap(abi_ulong start, abi_ulong len, int prot,
+                      int flags, int fd, abi_ulong offset)
+ {
+     abi_ulong ret, end, real_start, real_end, retaddr, host_offset, host_len;
++    int page_flags;
+ 
+     mmap_lock();
+     trace_target_mmap(start, len, prot, flags, fd, offset);
+@@ -539,7 +540,11 @@ abi_long target_mmap(abi_ulong start, abi_ulong len, int prot,
+         }
+     }
+  the_end1:
+-    page_set_flags(start, start + len, prot | PAGE_VALID);
++    page_flags = prot | PAGE_VALID;
++    if (flags & MAP_ANONYMOUS) {
++        page_flags |= PAGE_MAP_ANONYMOUS;
++    }
++    page_set_flags(start, start + len, page_flags, PAGE_SET_ALL_FLAGS);
+  the_end:
+     trace_target_mmap_complete(start);
+     if (qemu_loglevel_mask(CPU_LOG_PAGE)) {
+@@ -648,7 +653,7 @@ int target_munmap(abi_ulong start, abi_ulong len)
+     }
+ 
+     if (ret == 0) {
+-        page_set_flags(start, start + len, 0);
++        page_set_flags(start, start + len, 0, PAGE_SET_ALL_FLAGS);
+         tb_invalidate_phys_range(start, start + len);
+     }
+     mmap_unlock();
+@@ -728,10 +733,44 @@ abi_long target_mremap(abi_ulong old_addr, abi_ulong old_size,
+     } else {
+         new_addr = h2g(host_addr);
+         prot = page_get_flags(old_addr);
+-        page_set_flags(old_addr, old_addr + old_size, 0);
+-        page_set_flags(new_addr, new_addr + new_size, prot | PAGE_VALID);
++        page_set_flags(old_addr, old_addr + old_size, 0,
++                       PAGE_SET_ALL_FLAGS);
++        page_set_flags(new_addr, new_addr + new_size, prot | PAGE_VALID,
++                       PAGE_SET_ALL_FLAGS);
+     }
+     tb_invalidate_phys_range(new_addr, new_addr + new_size);
+     mmap_unlock();
+     return new_addr;
+ }
++
++int target_madvise(abi_ulong start, abi_ulong len, int advice)
++{
++    abi_ulong end, addr;
++    int ret;
++
++    len = TARGET_PAGE_ALIGN(len);
++    start &= TARGET_PAGE_MASK;
++
++    if (!guest_range_valid(start, len)) {
++        errno = EINVAL;
++        return -1;
++    }
++
++    /* A straight passthrough may not be safe because qemu sometimes
++       turns private file-backed mappings into anonymous mappings.
++       Most flags are hints so we ignore them.
++       One exception is made for MADV_DONTNEED on anonymous mappings,
++       that applications may rely on to zero out pages. */
++    if (advice & MADV_DONTNEED) {
++        end = start + len;
++        for (addr = start; addr < end; addr += TARGET_PAGE_SIZE) {
++            if (page_get_flags(addr) & PAGE_MAP_ANONYMOUS) {
++                ret = madvise(g2h(addr), TARGET_PAGE_SIZE, MADV_DONTNEED);
++                if (ret != 0) {
++                    return ret;
++                }
++            }
++        }
++    }
++    return 0;
++}
+\ No newline at end of file
+diff --git a/linux-user/qemu.h b/linux-user/qemu.h
+index 792c742..2df9da3 100644
+--- a/linux-user/qemu.h
++++ b/linux-user/qemu.h
+@@ -440,6 +440,7 @@ int target_munmap(abi_ulong start, abi_ulong len);
+ abi_long target_mremap(abi_ulong old_addr, abi_ulong old_size,
+                        abi_ulong new_size, unsigned long flags,
+                        abi_ulong new_addr);
++int target_madvise(abi_ulong start, abi_ulong len, int advice);
+ extern unsigned long last_brk;
+ extern abi_ulong mmap_next_start;
+ abi_ulong mmap_find_vma(abi_ulong, abi_ulong, abi_ulong);
+diff --git a/linux-user/syscall.c b/linux-user/syscall.c
+index 1351c7e..19c5dc7 100644
+--- a/linux-user/syscall.c
++++ b/linux-user/syscall.c
+@@ -4316,7 +4316,8 @@ static inline abi_ulong do_shmat(CPUArchState *cpu_env,
+ 
+     page_set_flags(raddr, raddr + shm_info.shm_segsz,
+                    PAGE_VALID | PAGE_READ |
+-                   ((shmflg & SHM_RDONLY)? 0 : PAGE_WRITE));
++                   ((shmflg & SHM_RDONLY) ? 0 : PAGE_WRITE),
++                   PAGE_SET_ALL_FLAGS);
+ 
+     for (i = 0; i < N_SHM_REGIONS; i++) {
+         if (!shm_regions[i].in_use) {
+@@ -4342,7 +4343,8 @@ static inline abi_long do_shmdt(abi_ulong shmaddr)
+     for (i = 0; i < N_SHM_REGIONS; ++i) {
+         if (shm_regions[i].in_use && shm_regions[i].start == shmaddr) {
+             shm_regions[i].in_use = false;
+-            page_set_flags(shmaddr, shmaddr + shm_regions[i].size, 0);
++            page_set_flags(shmaddr, shmaddr + shm_regions[i].size, 0,
++                           PAGE_SET_ALL_FLAGS);
+             break;
+         }
+     }
+@@ -11319,11 +11321,7 @@ static abi_long do_syscall1(void *cpu_env, int num, abi_long arg1,
+ 
+ #ifdef TARGET_NR_madvise
+     case TARGET_NR_madvise:
+-        /* A straight passthrough may not be safe because qemu sometimes
+-           turns private file-backed mappings into anonymous mappings.
+-           This will break MADV_DONTNEED.
+-           This is a hint, so ignoring and returning success is ok.  */
+-        return 0;
++        return get_errno(target_madvise(arg1, arg2, arg3));
+ #endif
+ #ifdef TARGET_NR_fcntl64
+     case TARGET_NR_fcntl64:

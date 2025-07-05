@@ -1,0 +1,7 @@
+temp
+download
+*.hnp
+.stamp
+sysroot
+buildroot
+file.lst
