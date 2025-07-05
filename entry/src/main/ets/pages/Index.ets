@@ -1,7 +1,7 @@
 @Entry
 @Component
 struct Index {
-  @State message: string = 'Hello World';
+  @State message: string = 'This page is reserved. To use Harmonix, go to HiShell';
 
   build() {
     RelativeContainer() {
