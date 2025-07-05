@@ -2,6 +2,8 @@
 
 Run linux rootfs (like alpine rootfs) on HarmonyOS PC, inspired by [Termony](https://github.com/jiegec/Termony), based on [harmony-qemu](https://github.com/hackeris/harmony-qemu).
 
+Originally for quick researching to integrate qemu-user to [Termony](https://github.com/jiegec/Termony). 
+
 Just playable now. Working in progress, in the early stages.
 
 ![Run in HiShell](./docs/images/screen_202507052366.jpg)
