@@ -33,3 +33,12 @@ busybox ls
 bin    dev    etc    home   lib    media  mnt    opt    proc   root   run    sbin   srv    sys    tmp    usr    var
 ```
 - `apk` is also runnable
+
+# Problems
+
+There may be some problems, because of
+
+- Not all path to syscall is relocated to rootfs
+- Path may not be relocated as expected
+- Soft link is not supported now
+- Other problems
