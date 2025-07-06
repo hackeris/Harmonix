@@ -1,8 +1,8 @@
 # Harmonix
 
-Run linux rootfs (like alpine rootfs) on HarmonyOS PC, inspired by [Termony](https://github.com/jiegec/Termony), based on [harmony-qemu](https://github.com/hackeris/harmony-qemu).
+Run linux rootfs (like alpine rootfs) on HarmonyOS PC, inspired by [Termony](https://github.com/TermonyHQ/Termony), based on [harmony-qemu](https://github.com/TermonyHQ/qemu).
 
-Originally for quick researching to integrate qemu-user to [Termony](https://github.com/jiegec/Termony). 
+Originally for quick researching to integrate qemu-user to [Termony](https://github.com/TermonyHQ/Termony). 
 
 Just playable now. Working in progress, in the early stages.
 
@@ -10,7 +10,7 @@ Just playable now. Working in progress, in the early stages.
 
 # Build
 
-To build and install to your device, see [Build Termony on Linux](https://github.com/jiegec/Termony?tab=readme-ov-file#usage-if-you-are-a-linux-user)
+To build and install to your device, see [Build Termony on Linux](https://github.com/TermonyHQ/Termony?tab=readme-ov-file#usage-if-you-are-a-linux-user)
 
 # Usage
 
