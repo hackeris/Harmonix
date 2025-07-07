@@ -8,7 +8,7 @@ struct Index {
       Text(this.message)
         .id('HelloWorld')
         .fontSize($r('app.float.page_text_font_size'))
-        .fontWeight(FontWeight.Bold)
+        .fontWeight(FontWeight.Normal)
         .alignRules({
           center: { anchor: '__container__', align: VerticalAlign.Center },
           middle: { anchor: '__container__', align: HorizontalAlign.Center }
