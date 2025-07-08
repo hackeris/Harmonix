@@ -26,7 +26,8 @@ cp usr/lib/libz.so.1.3.1 usr/lib/libz.so.1
 ```
 - Run qemu-aarch64 to load busybox with rootfs and env vars
 ```
-qemu-harmonix-aarch64 -E LD_LIBRARY_PATH=/lib:/usr/lib -E PATH=/bin:/usr/bin:/sbin -L /storage/Users/currentUser/alpine_rootfs /storage/Users/currentUser/alpine_rootfs/bin/busybox sh
+cd /storage/Users/currentUser/alpine_rootfs
+qemu-harmonix-aarch64 -E LD_LIBRARY_PATH=/lib:/usr/lib -E PATH=/bin:/usr/bin:/sbin -L ./ ./bin/busybox sh
 ```
 - cd to `/` and run `busybox ls`, the root changed!
 ```
