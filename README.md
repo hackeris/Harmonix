@@ -23,6 +23,7 @@ cd alpine_rootfs
 cp bin/busybox bin/sh
 cp lib/ld-musl-aarch64.so.1  lib/libc.musl-aarch64.so.1
 cp usr/lib/libz.so.1.3.1 usr/lib/libz.so.1
+cp etc/ssl/certs/ca-certificates.crt etc/ssl/cert.pem
 ```
 - Run qemu-aarch64 to load busybox with rootfs and env vars
 ```
