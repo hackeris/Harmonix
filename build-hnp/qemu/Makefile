@@ -22,4 +22,4 @@ all: download/qemu
 
 download/qemu:
 	mkdir -p download
-	cd download && git clone -b termony-qemu-vroot --depth=1 https://github.com/TermonyHQ/qemu qemu
+	cd download && git clone -b termony-qemu-vroot --depth=1 https://github.com/hackeris/harmony-qemu qemu

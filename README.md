@@ -1,8 +1,8 @@
 # Harmonix
 
-Run linux rootfs (like alpine rootfs) on HarmonyOS PC, inspired by [Termony](https://github.com/TermonyHQ/Termony), based on [harmony-qemu](https://github.com/TermonyHQ/qemu).
+Run linux elf binary (even alpine rootfs also supported) on HarmonyOS PC, inspired by [Termony](https://github.com/TermonyHQ/Termony), based on [harmony-qemu](https://github.com/hackeris/harmony-qemu).
 
-Originally for quick researching to integrate qemu-user to [Termony](https://github.com/TermonyHQ/Termony). 
+Originally for quick verification to integrate qemu-user to [Termony](https://github.com/TermonyHQ/Termony). 
 
 Just playable now. Working in progress, in the early stages.
 
