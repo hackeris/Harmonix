@@ -14,6 +14,8 @@ To build and install to your device, see [Build Termony on Linux](https://github
 
 # Usage
 
+- Build and sign hap of Harmonix
+  - or download unsigned hap from [Release page](https://github.com/hackeris/Harmonix/releases) and sign by your self
 - Install Harmonix to your HarmonyOS PC
 - Download alpine minimal root filesystem from https://alpinelinux.org/downloads/ (aarch64 or x64)
 - In HiShell, extract rootfs tar.gz file to data directory, for example `/data/storage/el2/base/files/alpine`
