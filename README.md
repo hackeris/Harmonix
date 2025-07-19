@@ -1,12 +1,12 @@
 # Harmonix
 
-Run linux elf binary (even alpine rootfs also supported) on HarmonyOS PC, inspired by [Termony](https://github.com/TermonyHQ/Termony), based on [harmony-qemu](https://github.com/hackeris/harmony-qemu).
+Run linux elf binary (alpine rootfs also supported) on HarmonyOS PC, inspired by [Termony](https://github.com/TermonyHQ/Termony), based on [harmony-qemu](https://github.com/hackeris/harmony-qemu).
 
 Originally for quick verification to integrate qemu-user to [Termony](https://github.com/TermonyHQ/Termony). 
 
-Just playable now. Working in progress, in the early stages.
+Working in progress, in the early stages.
 
-![Run in HiShell](./docs/images/screen_202507052366.jpg)
+![Run in HiShell](./docs/images/screen_202507192054.png)
 
 # Build
 
@@ -16,33 +16,34 @@ To build and install to your device, see [Build Termony on Linux](https://github
 
 - Install Harmonix to your HarmonyOS PC
 - Download alpine minimal root filesystem from https://alpinelinux.org/downloads/ (aarch64 or x64)
-- Extract rootfs tar.gz file, for example, to `/storage/Users/currentUser/alpine_rootfs`
-- Fix some missing soft links by cp
-```
-cd alpine_rootfs
-cp bin/busybox bin/sh
-cp lib/ld-musl-aarch64.so.1  lib/libc.musl-aarch64.so.1
-cp usr/lib/libz.so.1.3.1 usr/lib/libz.so.1
-cp etc/ssl/certs/ca-certificates.crt etc/ssl/cert.pem
-```
-- Run qemu-aarch64 to load busybox with rootfs and env vars
-```
-cd /storage/Users/currentUser/alpine_rootfs
-qemu-harmonix-aarch64 -E LD_LIBRARY_PATH=/lib:/usr/lib -E PATH=/bin:/usr/bin:/sbin -L ./ ./bin/busybox sh
+- In HiShell, extract rootfs tar.gz file to data directory, for example `/data/storage/el2/base/files/alpine`
+- Run qemu-harmonix-aarch64 to load busybox shell with rootfs and environment variables
+```shell
+cd /data/storage/el2/base/files/alpine
+qemu-harmonix-aarch64 -E PATH=/bin:/usr/bin:/sbin -E HOME=/root -L ./ ./bin/busybox sh -c 'cd ~ && sh'
 ```
 - cd to `/` and run `busybox ls`, the root changed!
-```
+```shell
 cd /
-busybox ls
+ls
 bin    dev    etc    home   lib    media  mnt    opt    proc   root   run    sbin   srv    sys    tmp    usr    var
 ```
 - `apk` is also runnable
+```shell
+apk add gcc
+```
+- `gcc` can compile a `Hello World` to run
+```shell
+gcc hello.c -o hello
+./hello
+```
+![GCC compiles Hello World](docs/images/screen_202507192010.png)
 
 # Problems
 
-There may be some problems, because of
+There may be some problems, such as
 
-- Not all path to syscall is relocated to rootfs
+- Some syscalls may not be relocated to rootfs
 - Path may not be relocated as expected
-- Soft link is not supported now
+- Hard link is not supported now
 - Other problems
