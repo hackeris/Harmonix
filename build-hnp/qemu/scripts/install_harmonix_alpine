@@ -1,0 +1,13 @@
+#/bin/env sh
+
+mkdir -p /data/storage/el2/base/temp
+cd /data/storage/el2/base/temp
+wget https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/aarch64/alpine-minirootfs-3.22.1-aarch64.tar.gz -O alpine-minirootfs.tar.gz
+
+rm -rf /data/storage/el2/base/files/alpine
+mkdir /data/storage/el2/base/files/alpine
+
+cd /data/storage/el2/base/files
+tar xvf /data/storage/el2/base/temp/alpine-minirootfs.tar.gz -C alpine
+
+echo 'Done'

@@ -17,8 +17,9 @@ all: download/qemu
 	cp temp/qemu/x86_64-linux-user/qemu-x86_64 ./build/bin/
 	$(OHOS_SDK_HOME)/native/llvm/bin/llvm-strip ./build/bin/*
 	mkdir -p ../sysroot/bin
-	cp -rv ./build/bin/qemu-aarch64 ../sysroot/bin/qemu-harmonix-aarch64 | tee file.lst
-	cp -rv ./build/bin/qemu-x86_64 ../sysroot/bin/qemu-harmonix-x86_64 | tee file.lst
+	cp -rv ./build/bin/qemu-aarch64 ../sysroot/bin/qemu-harmonix-aarch64
+	cp -rv ./build/bin/qemu-x86_64 ../sysroot/bin/qemu-harmonix-x86_64
+	cp -rv ./scripts/* ../sysroot/bin/
 
 download/qemu:
 	mkdir -p download
