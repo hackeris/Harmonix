@@ -15,7 +15,7 @@ export default class EntryAbility extends UIAbility {
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onDestroy');
   }
 
-  onWindowStageCreate(windowStage: window.WindowStage): void {
+  async onWindowStageCreate(windowStage: window.WindowStage): Promise<void> {
     // Main window is created, set main page for this ability
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
 
@@ -28,10 +28,8 @@ export default class EntryAbility extends UIAbility {
     });
 
     const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
-    atManager.requestPermissionsFromUser(this.context, ['ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY']).then((data) => {
-      atManager.requestPermissionsFromUser(this.context, ['ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY']).then((data) => {
-      });
-    });
+    await atManager.requestPermissionsFromUser(this.context, ['ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY']);
+    await atManager.requestPermissionsFromUser(this.context, ['ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY']);
   }
 
   onWindowStageDestroy(): void {
