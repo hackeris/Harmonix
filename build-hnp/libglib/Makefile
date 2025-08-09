@@ -16,11 +16,11 @@ all: download/glib
 	cd temp/glib && echo "cpu_family = 'aarch64'" >> cross.txt
 	cd temp/glib && echo "cpu = 'aarch64'" >> cross.txt
 	cd temp/glib && echo "endian = 'little'" >> cross.txt
-	cd temp/glib && PKG_CONFIG=$(shell which pkg-config) PKG_CONFIG_LIBDIR=$(shell pwd)/../buildroot/lib/pkgconfig meson --cross-file cross.txt --prefix=/data/app/harmonix.org/harmonix_1.0 -Dselinux=false -Dinstalled_tests=false -Ddtrace=disabled -Dsystemtap=disabled -Dselinux=disabled -Dlibelf=disabled -Dlibmount=disabled -Ddefault_library=both build
+	cd temp/glib && PKG_CONFIG=$(shell which pkg-config) PKG_CONFIG_LIBDIR=$(shell pwd)/../buildroot/lib/pkgconfig meson --cross-file cross.txt --prefix=/ -Dselinux=false -Dinstalled_tests=false -Ddtrace=disabled -Dsystemtap=disabled -Dselinux=disabled -Dlibelf=disabled -Dlibmount=disabled -Ddefault_library=both build
 	cd temp/glib/build && meson compile
 	mkdir -p ../buildroot
 	cd temp/glib/build && DESTDIR=$(shell pwd)/build meson install
-	cp -rfv ./build/data/app/harmonix.org/harmonix_1.0/. ../buildroot | tee file.lst
+	cp -rfv ./build/. ../buildroot | tee file.lst
 
 download/glib:
 	mkdir -p download

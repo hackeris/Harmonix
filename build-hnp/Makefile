@@ -2,7 +2,7 @@ PKGS=zstd \
     zlib \
     pcre2 \
 	libglib \
-	qemu
+	qemu-10
 STAMP=$(patsubst %,%/.stamp,$(PKGS))
 
 all: copy

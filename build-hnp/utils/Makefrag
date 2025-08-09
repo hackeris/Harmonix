@@ -17,7 +17,7 @@ export STRIP := $(OHOS_SDK_HOME)/native/llvm/bin/llvm-strip
 export CFLAGS := -I$(shell pwd)/../buildroot/include -Wno-int-conversion -O2
 export CXXFLAGS := -I$(shell pwd)/../buildroot/include -O2
 export LDFLAGS := -L$(shell pwd)/../buildroot/lib
-export PREFIX := /data/app/harmonix.org/harmonix_1.0
+export PREFIX := /
 
 define define_autotools_package
 all: download/$(SOURCE_FILE)
