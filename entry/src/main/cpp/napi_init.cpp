@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <array>
 #include <assert.h>
+#include <bits/alltypes.h>
 #include <cstdint>
 #include <deque>
 #include <fcntl.h>
@@ -17,12 +18,16 @@
 #include <unistd.h>
 #include <vector>
 
-static int width = 127;
-static int height = 36;
+#include "hilog/log.h"
+
+#undef LOG_DOMAIN
+#undef LOG_TAG
+#define LOG_DOMAIN 0x3200
+#define LOG_TAG "NapiTerminal"
 
 static int fd = -1;
 
-static napi_value Add(napi_env env, napi_callback_info info) {
+static napi_value add(napi_env env, napi_callback_info info) {
     size_t argc = 2;
     napi_value args[2] = {nullptr};
 
@@ -46,10 +51,55 @@ static napi_value Add(napi_env env, napi_callback_info info) {
     return sum;
 }
 
-static void *terminal_worker(void *) {}
+napi_threadsafe_function registered_callback = nullptr;
 
-static napi_value Run(napi_env env, napi_callback_info info) {
+struct data_buffer {
+    char *buf;
+    size_t size;
+};
 
+static void *terminal_worker(void *) {
+
+    while (true) {
+
+        struct pollfd fds[1];
+        fds[0].fd = fd;
+        fds[0].events = POLLIN;
+        int res = poll(fds, 1, 100);
+
+        uint8_t buffer[1024];
+        if (res > 0) {
+            ssize_t r = read(fd, buffer, sizeof(buffer) - 1);
+            if (r > 0) {
+                // pretty print
+                std::string hex;
+                for (int i = 0; i < r; i++) {
+                    if (buffer[i] >= 127 || buffer[i] < 32) {
+                        char temp[8];
+                        snprintf(temp, sizeof(temp), "\\x%02x", buffer[i]);
+                        hex += temp;
+                    } else {
+                        hex += (char)buffer[i];
+                    }
+                }
+
+                if (hex.length() > 0 && registered_callback != nullptr) {
+                    data_buffer *pbuf = new data_buffer{.buf = new char[hex.length()], .size = (size_t)hex.length()};
+                    memcpy(pbuf->buf, &hex[0], hex.length());
+                    napi_call_threadsafe_function(registered_callback, pbuf, napi_tsfn_nonblocking);
+                }
+
+                OH_LOG_INFO(LOG_APP, "Got: %{public}s", hex.c_str());
+            } else if (r < 0) {
+
+                OH_LOG_INFO(LOG_APP, "Program exited: %{public}ld %{public}d", r, errno);
+            }
+        }
+    }
+}
+
+static napi_value run(napi_env env, napi_callback_info info) {
+    
     size_t argc = 2;
     napi_value args[2] = {nullptr};
 
@@ -67,10 +117,11 @@ static napi_value Run(napi_env env, napi_callback_info info) {
     double value1;
     napi_get_value_double(env, args[1], &value1);
 
-    width = value0;
-    height = value1;
+    int width = value0;
+    int height = value1;
 
-    if (!fd) {
+    if (fd < 0) {
+
         struct winsize ws = {};
         ws.ws_col = width;
         ws.ws_row = height;
@@ -104,20 +155,77 @@ static napi_value send(napi_env env, napi_callback_info info) {
     napi_value args[1] = {nullptr};
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-    void *data;
+    char *data;
     size_t length;
-    napi_status ret = napi_get_arraybuffer_info(env, args[0], &data, &length);
+    napi_status ret = napi_get_arraybuffer_info(env, args[0], (void **)&data, &length);
     assert(ret == napi_ok);
 
-//    SendData((uint8_t *)data, length);
+    std::string hex;
+    for (int i = 0; i < length; i++) {
+        if (data[i] >= 127 || data[i] < 32) {
+            char temp[8];
+            snprintf(temp, sizeof(temp), "\\x%02x", data[i]);
+            hex += temp;
+        } else {
+            hex += (char)data[i];
+        }
+    }
+    OH_LOG_INFO(LOG_APP, "Send: %{public}s", hex.c_str());
+
+    if (fd > 0) {
+        int written = 0;
+        while (written < length) {
+            int size = write(fd, (uint8_t *)data + written, length - written);
+            assert(size >= 0);
+            written += size;
+        }
+    }
+
+    return nullptr;
+}
+
+void real_func_call_js(napi_env env, napi_value js_callback, void *context, void *data) {
+
+    data_buffer *buffer = static_cast<data_buffer *>(data);
+
+    napi_value ab;
+    char *input;
+    napi_create_arraybuffer(env, buffer->size, (void **)&input, &ab);
+    memcpy(input, buffer->buf, buffer->size);
+
+    napi_value global;
+    napi_get_global(env, &global);
+
+    napi_value result;
+    napi_value args[1] = {ab};
+    napi_call_function(env, global, js_callback, 1, args, &result);
+
+    delete[] buffer->buf;
+    delete buffer;
+}
+
+static napi_value register_callback(napi_env env, napi_callback_info info) {
+
+    size_t argc = 1;
+    napi_value args[1];
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    napi_value src_cb_name;
+    napi_create_string_utf8(env, "data_callback", NAPI_AUTO_LENGTH, &src_cb_name);
+
+    napi_create_threadsafe_function(env, args[0], nullptr, src_cb_name, 0, 1, nullptr, nullptr, nullptr,
+                                    real_func_call_js, &registered_callback);
+
     return nullptr;
 }
 
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
-    napi_property_descriptor desc[] = {{"add", nullptr, Add, nullptr, nullptr, nullptr, napi_default, nullptr},
-                                       {"run", nullptr, Run, nullptr, nullptr, nullptr, napi_default, nullptr},
-                                       {"send", nullptr, send, nullptr, nullptr, nullptr, napi_default, nullptr}};
+    napi_property_descriptor desc[] = {
+        {"add", nullptr, add, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"run", nullptr, run, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"send", nullptr, send, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"subscribe", nullptr, register_callback, nullptr, nullptr, nullptr, napi_default, nullptr}};
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;
 }

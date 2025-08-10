@@ -1,3 +1,5 @@
+import util from '@ohos.util';
+import { buffer } from '@kit.ArkTS';
 import { webview } from '@kit.ArkWeb';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import napi from 'libentry.so';
@@ -9,6 +11,11 @@ interface Size {
   height: number
 }
 
+function stringToArrayBuffer(str: string, encoding: buffer.BufferEncoding = 'utf-8'): ArrayBuffer {
+  const buf = buffer.from(str, encoding);
+  return buf.buffer;
+}
+
 class NativeProxy {
   webviewController: webview.WebviewController
 
@@ -17,47 +24,56 @@ class NativeProxy {
   }
 
   propUpdate(key: object, value: object): void {
-    hilog.info(DOMAIN, 'native', '%{public}s', 'propUpdate: ' + key + ", value: " + value);
+    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'propUpdate: ' + key + ", value: " + value);
   }
 
   sendInput(data: string): void {
-    hilog.info(DOMAIN, 'native', '%{public}s', 'sendInput: ' + data);
-    this.webviewController.runJavaScript('exports.write("' + data + '")')
+    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'sendInput: ' + data);
+    let buffer = stringToArrayBuffer(data, 'utf-8');
+    napi.send(buffer)
   }
 
   async resize(): Promise<void> {
     const s = await this.getSize();
-    hilog.info(DOMAIN, 'native', '%{public}s', 'resize: ' + s.width + ", " + s.height)
+    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'resize: ' + s.width + ", " + s.height)
   }
 
   focus(): void {
-    hilog.info(DOMAIN, 'native', '%{public}s', 'focus')
+    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'focus')
   }
 
   syncFocus(): void {
-    hilog.info(DOMAIN, 'native', '%{public}s', 'syncFocus')
+    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'syncFocus')
   }
 
   newScrollHeight(h: number): void {
-    hilog.info(DOMAIN, 'native', '%{public}s', 'newScrollHeight: ' + h)
+    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'newScrollHeight: ' + h)
   }
 
   newScrollTop(h: number): void {
-    hilog.info(DOMAIN, 'native', '%{public}s', 'newScrollTop: ' + h)
+    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'newScrollTop: ' + h)
   }
 
   openLink(url: string): void {
-    hilog.info(DOMAIN, 'native', '%{public}s', 'openLink: ' + url)
+    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'openLink: ' + url)
   }
 
   async load(): Promise<void> {
-    hilog.info(DOMAIN, 'native', '%{public}s', 'load')
-    this.webviewController.runJavaScript('exports.write("shell")')
+    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'load')
     this.webviewController.runJavaScript('exports.setFocused(true)')
 
     const s: Size = await this.getSize();
 
-    console.log('w: ' + s.width + ', h: ' + s.height)
+    napi.subscribe((a: ArrayBuffer) => {
+      let dec = util.TextDecoder.create('utf-8', { ignoreBOM: true })
+      let s: string = dec.decodeToString(new Uint8Array(a))
+
+      hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'write: ' + s)
+
+      this.webviewController.runJavaScript('exports.write("' + s + '")')
+    })
+
+    napi.run(s.width, s.height)
   }
 
   private async getSize(): Promise<Size> {
