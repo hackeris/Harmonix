@@ -143,7 +143,7 @@ static napi_value run(napi_env env, napi_callback_info info) {
             const char *home = "/storage/Users/currentUser";
             setenv("HOME", home, 1);
             setenv("PWD", home, 1);
-            setenv("PATH", "/bin", 1);
+            setenv("PATH", "/data/app/bin:/data/service/hnp/bin:/bin:/usr/local/bin:/usr/bin:/system/bin:/vendor/bin", 1);
 
             chdir(home);
             execl("/bin/sh", "/bin/sh", nullptr);
