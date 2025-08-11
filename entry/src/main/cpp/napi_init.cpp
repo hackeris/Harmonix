@@ -27,7 +27,8 @@
 
 static int fd = -1;
 
-static napi_value add(napi_env env, napi_callback_info info) {
+static napi_value resize(napi_env env, napi_callback_info info) {
+
     size_t argc = 2;
     napi_value args[2] = {nullptr};
 
@@ -45,10 +46,20 @@ static napi_value add(napi_env env, napi_callback_info info) {
     double value1;
     napi_get_value_double(env, args[1], &value1);
 
-    napi_value sum;
-    napi_create_double(env, value0 + value1, &sum);
+    int width = value0;
+    int height = value1;
 
-    return sum;
+    if (fd > 0) {
+        struct winsize ws = {};
+        ws.ws_col = width;
+        ws.ws_row = height;
+        int ret = ioctl(fd, TIOCSWINSZ, &ws);
+        assert(ret == 0);
+
+        OH_LOG_INFO(LOG_APP, "Resize: %{public}d, %{public}d", width, height);
+    }
+
+    return nullptr;
 }
 
 napi_threadsafe_function registered_callback = nullptr;
@@ -83,6 +94,7 @@ static void *terminal_worker(void *) {
                     }
                 }
 
+                //  call callback registered by ArkTS
                 if (hex.length() > 0 && registered_callback != nullptr) {
                     data_buffer *pbuf = new data_buffer{.buf = new char[hex.length()], .size = (size_t)hex.length()};
                     memcpy(pbuf->buf, &hex[0], hex.length());
@@ -99,7 +111,7 @@ static void *terminal_worker(void *) {
 }
 
 static napi_value run(napi_env env, napi_callback_info info) {
-    
+
     size_t argc = 2;
     napi_value args[2] = {nullptr};
 
@@ -131,6 +143,7 @@ static napi_value run(napi_env env, napi_callback_info info) {
             const char *home = "/storage/Users/currentUser";
             setenv("HOME", home, 1);
             setenv("PWD", home, 1);
+            setenv("PATH", "/bin", 1);
 
             chdir(home);
             execl("/bin/sh", "/bin/sh", nullptr);
@@ -222,7 +235,7 @@ static napi_value register_callback(napi_env env, napi_callback_info info) {
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
-        {"add", nullptr, add, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"resize", nullptr, resize, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"run", nullptr, run, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"send", nullptr, send, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"subscribe", nullptr, register_callback, nullptr, nullptr, nullptr, napi_default, nullptr}};

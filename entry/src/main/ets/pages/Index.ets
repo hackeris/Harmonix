@@ -36,6 +36,7 @@ class NativeProxy {
   async resize(): Promise<void> {
     const s = await this.getSize();
     hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'resize: ' + s.width + ", " + s.height)
+    napi.resize(s.width, s.height)
   }
 
   focus(): void {
@@ -92,7 +93,6 @@ struct Index {
 
   aboutToAppear(): void {
     webview.WebviewController.setWebDebuggingAccess(true)
-    hilog.info(DOMAIN, 'testTag', 'Test NAPI 2 + 3 = %{public}d', napi.add(2, 3));
   }
 
   build() {
