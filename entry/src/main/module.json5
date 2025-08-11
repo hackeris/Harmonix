@@ -73,6 +73,10 @@
       {
         "package": "harmonix-public.hnp",
         "type": "public"
+      },
+      {
+        "package": "harmonix-private.hnp",
+        "type": "private"
       }
     ]
   }

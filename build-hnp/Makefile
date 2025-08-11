@@ -9,7 +9,7 @@ all: copy
 
 copy: harmonix-public.hnp
 	rm -f ../entry/hnp/arm64-v8a/*.hnp
-	cp $^ ../entry/hnp/arm64-v8a
+	cp $^ ../entry/hnp/arm64-v8a/harmonix-private.hnp
 	cp $^ ../entry/hnp/arm64-v8a/harmonix-public.hnp
 
 harmonix-public.hnp: $(STAMP) Makefile
