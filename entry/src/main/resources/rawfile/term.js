@@ -16,15 +16,11 @@ window.onload = async function () {
     await lib.init();
     window.term = new hterm.Terminal();
 
-    // make everything invisible so as to not be embarrassing
-    term.getPrefs().set('background-color', 'transparent');
-    term.getPrefs().set('foreground-color', 'transparent');
-
+    term.getPrefs().set('cursor-color', '#cccccc');
     term.getPrefs().set('terminal-encoding', 'iso-2022');
     term.getPrefs().set('enable-resize-status', false);
     term.getPrefs().set('copy-on-select', false);
     term.getPrefs().set('enable-clipboard-notice', false);
-    term.getPrefs().set('user-css-text', termCss);
     term.getPrefs().set('screen-padding-size', 4);
     // Creating and preloading the <audio> element for this sometimes hangs WebKit on iOS 16 for some reason. Can be most easily reproduced by resetting a simulator and starting the app. System logs show Fig hanging while trying to do work.
     term.getPrefs().set('audible-bell-sound', '');
@@ -33,21 +29,6 @@ window.onload = async function () {
     term.decorate(document.getElementById('terminal'));
     term.installKeyboard();
 };
-
-var termCss = `
-x-screen {
-    background: transparent !important;
-    overflow: hidden !important;
-    -webkit-tap-highlight-color: transparent;
-}
-x-row {
-  text-rendering: optimizeLegibility;
-  font-variant-ligatures: normal;
-}
-.uri-node {
-  text-decoration: underline;
-}
-`;
 
 function onTerminalReady() {
 
