@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string>
 #include <sys/time.h>
+#include <termios.h>
 #include <unistd.h>
 #include <vector>
 
@@ -137,13 +138,48 @@ static napi_value run(napi_env env, napi_callback_info info) {
         struct winsize ws = {};
         ws.ws_col = width;
         ws.ws_row = height;
-        int pid = forkpty(&fd, nullptr, nullptr, &ws);
+
+        // termios
+        struct termios t {};
+        struct termios *term = &t;
+        
+        term->c_iflag = ICRNL | IXON | IUTF8;
+        term->c_oflag = NL0 | CR0 | TAB0 | BS0 | VT0 | FF0 | OPOST | ONLCR;
+        term->c_cflag = B38400 | CS8 | CREAD;
+        //  ICANON | ECHO removed
+        term->c_lflag = ISIG | ECHOE | ECHOK | IEXTEN | ECHOCTL | ECHOKE;
+
+        term->c_cc[VINTR] = 0x3;
+        term->c_cc[VQUIT] = 0x1c;
+        term->c_cc[VERASE] = 0x7f;
+        term->c_cc[VKILL] = 0x15;
+        term->c_cc[VEOF] = 0x4;
+        term->c_cc[VMIN] = 0x1;
+        term->c_cc[VSTART] = 0x11;
+        term->c_cc[VSTOP] = 0x13;
+        term->c_cc[VSUSP] = 0x1a;
+        term->c_cc[VREPRINT] = 0x12;
+        term->c_cc[VDISCARD] = 0xf;
+        term->c_cc[VWERASE] = 0x17;
+        term->c_cc[VLNEXT] = 0x16;
+
+        term->c_cc[19] = 0x7f;
+        term->c_cc[24] = 0x20;
+        term->c_cc[25] = 0x88;
+        term->c_cc[26] = 0xb6;
+        term->c_cc[27] = 0x7f;
+        term->c_cc[31] = 0x78;
+
+        int pid = forkpty(&fd, nullptr, term, &ws);
 
         if (!pid) {
             const char *home = "/storage/Users/currentUser";
             setenv("HOME", home, 1);
             setenv("PWD", home, 1);
-            setenv("PATH", "/data/app/bin:/data/service/hnp/bin:/bin:/usr/local/bin:/usr/bin:/system/bin:/vendor/bin", 1);
+            setenv("PATH",
+                   "/data/app/bin:/data/service/hnp/bin:/bin:"
+                   "/usr/local/bin:/usr/bin:/system/bin:/vendor/bin",
+                   1);
 
             chdir(home);
             execl("/bin/sh", "/bin/sh", nullptr);
