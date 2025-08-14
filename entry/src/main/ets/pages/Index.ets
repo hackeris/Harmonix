@@ -2,6 +2,7 @@ import util from '@ohos.util';
 import { buffer } from '@kit.ArkTS';
 import { webview } from '@kit.ArkWeb';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { common } from '@kit.AbilityKit';
 import napi from 'libentry.so';
 
 const DOMAIN = 0x0001;
@@ -65,7 +66,7 @@ class NativeProxy {
 
     const s: Size = await this.getSize();
 
-    napi.subscribe((a: ArrayBuffer) => {
+    napi.onData((a: ArrayBuffer) => {
       let dec = util.TextDecoder.create('utf-8', { ignoreBOM: true })
       let s: string = dec.decodeToString(new Uint8Array(a))
 
@@ -101,6 +102,12 @@ struct Index {
         src: $rawfile('term.html'),
         controller: this.webviewController
       })
+        .onPageBegin(() => {
+          napi.onExit(() => {
+            (this.getUIContext().getHostContext() as common.UIAbilityContext)?.terminateSelf()
+            hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'onExit')
+          })
+        })
         .javaScriptProxy({
           object: this.native,
           name: 'native',

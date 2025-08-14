@@ -63,7 +63,8 @@ static napi_value resize(napi_env env, napi_callback_info info) {
     return nullptr;
 }
 
-napi_threadsafe_function registered_callback = nullptr;
+napi_threadsafe_function on_data_callback = nullptr;
+napi_threadsafe_function on_exit_callback = nullptr;
 
 struct data_buffer {
     char *buf;
@@ -96,19 +97,23 @@ static void *terminal_worker(void *) {
                 }
 
                 //  call callback registered by ArkTS
-                if (hex.length() > 0 && registered_callback != nullptr) {
+                if (hex.length() > 0 && on_data_callback != nullptr) {
                     data_buffer *pbuf = new data_buffer{.buf = new char[hex.length()], .size = (size_t)hex.length()};
                     memcpy(pbuf->buf, &hex[0], hex.length());
-                    napi_call_threadsafe_function(registered_callback, pbuf, napi_tsfn_nonblocking);
+                    napi_call_threadsafe_function(on_data_callback, pbuf, napi_tsfn_nonblocking);
                 }
 
                 OH_LOG_INFO(LOG_APP, "Got: %{public}s", hex.c_str());
             } else if (r < 0) {
 
                 OH_LOG_INFO(LOG_APP, "Program exited: %{public}ld %{public}d", r, errno);
+                break;
             }
         }
     }
+
+    napi_call_threadsafe_function(on_exit_callback, nullptr, napi_tsfn_nonblocking);
+    return nullptr;
 }
 
 static napi_value run(napi_env env, napi_callback_info info) {
@@ -142,7 +147,7 @@ static napi_value run(napi_env env, napi_callback_info info) {
         // termios
         struct termios t {};
         struct termios *term = &t;
-        
+
         term->c_iflag = ICRNL | IXON | IUTF8;
         term->c_oflag = NL0 | CR0 | TAB0 | BS0 | VT0 | FF0 | OPOST | ONLCR;
         term->c_cflag = B38400 | CS8 | CREAD;
@@ -233,7 +238,7 @@ static napi_value send(napi_env env, napi_callback_info info) {
     return nullptr;
 }
 
-void real_func_call_js(napi_env env, napi_value js_callback, void *context, void *data) {
+void call_on_data_callback(napi_env env, napi_value js_callback, void *context, void *data) {
 
     data_buffer *buffer = static_cast<data_buffer *>(data);
 
@@ -253,7 +258,17 @@ void real_func_call_js(napi_env env, napi_value js_callback, void *context, void
     delete buffer;
 }
 
-static napi_value register_callback(napi_env env, napi_callback_info info) {
+void call_on_exit_callback(napi_env env, napi_value js_callback, void *context, void *data) {
+
+    napi_value global;
+    napi_get_global(env, &global);
+
+    napi_value result;
+    napi_value args[1] = {};
+    napi_call_function(env, global, js_callback, 0, args, &result);
+}
+
+static napi_value register_on_data_callback(napi_env env, napi_callback_info info) {
 
     size_t argc = 1;
     napi_value args[1];
@@ -263,7 +278,22 @@ static napi_value register_callback(napi_env env, napi_callback_info info) {
     napi_create_string_utf8(env, "data_callback", NAPI_AUTO_LENGTH, &src_cb_name);
 
     napi_create_threadsafe_function(env, args[0], nullptr, src_cb_name, 0, 1, nullptr, nullptr, nullptr,
-                                    real_func_call_js, &registered_callback);
+                                    call_on_data_callback, &on_data_callback);
+
+    return nullptr;
+}
+
+static napi_value register_on_exit_callback(napi_env env, napi_callback_info info) {
+
+    size_t argc = 1;
+    napi_value args[1];
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    napi_value src_cb_name;
+    napi_create_string_utf8(env, "exit_callback", NAPI_AUTO_LENGTH, &src_cb_name);
+
+    napi_create_threadsafe_function(env, args[0], nullptr, src_cb_name, 0, 1, nullptr, nullptr, nullptr,
+                                    call_on_exit_callback, &on_exit_callback);
 
     return nullptr;
 }
@@ -274,7 +304,8 @@ static napi_value Init(napi_env env, napi_value exports) {
         {"resize", nullptr, resize, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"run", nullptr, run, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"send", nullptr, send, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"subscribe", nullptr, register_callback, nullptr, nullptr, nullptr, napi_default, nullptr}};
+        {"onData", nullptr, register_on_data_callback, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"onExit", nullptr, register_on_exit_callback, nullptr, nullptr, nullptr, napi_default, nullptr}};
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;
 }
