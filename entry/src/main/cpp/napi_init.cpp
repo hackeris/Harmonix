@@ -91,6 +91,10 @@ static void *terminal_worker(void *) {
                         char temp[8];
                         snprintf(temp, sizeof(temp), "\\x%02x", buffer[i]);
                         hex += temp;
+                    } else if (buffer[i] == '\'' || buffer[i] == '\"' || buffer[i] == '\\') {
+                        char temp[8];
+                        snprintf(temp, sizeof(temp), "\\%c", buffer[i]);
+                        hex += temp;
                     } else {
                         hex += (char)buffer[i];
                     }
