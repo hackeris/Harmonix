@@ -8,9 +8,9 @@ STAMP=$(patsubst %,%/.stamp,$(PKGS))
 all: copy
 
 copy: harmonix-public.hnp
-	rm -f ../entry/hnp/arm64-v8a/*.hnp
-	cp $^ ../entry/hnp/arm64-v8a/harmonix-private.hnp
-	cp $^ ../entry/hnp/arm64-v8a/harmonix-public.hnp
+	rm -f ../entry/hnp/$(OHOS_ABI)/*.hnp
+	cp $^ ../entry/hnp/$(OHOS_ABI)/harmonix-private.hnp
+	cp $^ ../entry/hnp/$(OHOS_ABI)/harmonix-public.hnp
 
 harmonix-public.hnp: $(STAMP) Makefile
 	# reduce size

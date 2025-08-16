@@ -5,8 +5,8 @@ export LC_TYPE := C
 # avoid probing unwanted packages
 export PKG_CONFIG := /usr/bin/false
 # set toolchain paths
-export CC := $(OHOS_SDK_HOME)/native/llvm/bin/aarch64-unknown-linux-ohos-clang
-export CXX := $(OHOS_SDK_HOME)/native/llvm/bin/aarch64-unknown-linux-ohos-clang++
+export CC := $(OHOS_SDK_HOME)/native/llvm/bin/$(OHOS_ARCH)-unknown-linux-ohos-clang
+export CXX := $(OHOS_SDK_HOME)/native/llvm/bin/$(OHOS_ARCH)-unknown-linux-ohos-clang++
 export LD := $(OHOS_SDK_HOME)/native/llvm/bin/ld.lld
 export AR := $(OHOS_SDK_HOME)/native/llvm/bin/llvm-ar
 export RANLIB := $(OHOS_SDK_HOME)/native/llvm/bin/llvm-ranlib
