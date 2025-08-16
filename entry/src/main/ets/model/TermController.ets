@@ -16,16 +16,14 @@ function stringToArrayBuffer(str: string, encoding: buffer.BufferEncoding = 'utf
   return buf.buffer;
 }
 
-let termId = 0
-
 export class TermController {
   webviewController: webview.WebviewController
   id: number
   close: () => void
 
-  constructor(close: () => void) {
+  constructor(id: number, close: () => void) {
+    this.id = id;
     this.webviewController = new webview.WebviewController()
-    this.id = ++termId;
     this.close = close;
   }
 

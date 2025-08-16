@@ -1,12 +1,12 @@
 import { FULL_PERCENT, STYLE_CONFIGURATION } from '../model/TabStyle';
-import { TermController } from '../model/TermController';
+import { TermModel } from '../model/TermModel';
 
 @Component
 export struct TabSheets {
-  @Link tabArray: Array<TermController>;
+  @Link tabArray: Array<TermModel>;
   @Link @Watch('onFocusIndexChange') focusIndex: number;
   @State middleIndex: number = this.focusIndex;
-  @Require closeTab: (index: number) => void
+  @Require closeTabAndTerm: (id: number) => void
   @Require controller: TabsController
 
   onFocusIndexChange() {
@@ -15,7 +15,7 @@ export struct TabSheets {
 
   build() {
     Row({ space: STYLE_CONFIGURATION.TAB_BAR_ITEM_GUTTER }) {
-      ForEach(this.tabArray, (item: TermController, index: number) => {
+      ForEach(this.tabArray, (item: TermModel, index: number) => {
         Row({ space: STYLE_CONFIGURATION.TAB_BAR_CONTENT_GUTTER }) {
           Text($r('app.string.newSheet'))
             .textOverflow({ overflow: TextOverflow.Clip })
@@ -26,7 +26,7 @@ export struct TabSheets {
               .width(STYLE_CONFIGURATION.ICON_SIZE)
               .aspectRatio(1)
               .onClick(() => {
-                this.closeTab(index)
+                this.closeTabAndTerm(item.id)
               })
           }
         }
@@ -53,7 +53,7 @@ export struct TabSheets {
               .lineCap(LineCapStyle.Round)
           }
         }
-      }, (item: TermController) => 'tab-' + item.id.toString())
+      }, (item: TermModel) => 'tab-' + item.id.toString())
 
       Image($r('app.media.ic_public_add_filled'))
         .width(STYLE_CONFIGURATION.ICON_SIZE)
@@ -61,10 +61,8 @@ export struct TabSheets {
         .onClick(() => {
           if (this.tabArray.length < 6) {
 
-            const next = this.tabArray.length;
-
             const newArray = Array.from(this.tabArray)
-            newArray.push(new TermController(() => this.closeTab(next)));
+            newArray.push(new TermModel(this.closeTabAndTerm));
 
             const newTabIndex: number = newArray.length - 1;
 

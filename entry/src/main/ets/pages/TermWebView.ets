@@ -32,22 +32,25 @@ function buildWebView(item: TermController) {
 }
 
 export class TermWebView extends NodeController {
-  private textNode: BuilderNode<[TermController]> | null = null;
-  private webviewController: TermController
+  private webNode: BuilderNode<[TermController]> | null = null;
+  private state: TermController
 
   constructor(webviewController: TermController) {
     super();
-    this.webviewController = webviewController;
+    this.state = webviewController;
   }
 
   makeNode(context: UIContext): FrameNode | null {
+    if (this.webNode != null) {
+      return this.webNode.getFrameNode()
+    }
     // Creating a BuilderNode instance
-    this.textNode = new BuilderNode(context);
+    this.webNode = new BuilderNode(context);
     // Set the selfIdealSize property
     // this.textNode = new BuilderNode(context, {selfIdealSize: {width: 100, height :100}});
     // Build the component tree using the build method
-    this.textNode.build(wrapBuilder<[TermController]>(buildWebView), this.webviewController);
+    this.webNode.build(wrapBuilder<[TermController]>(buildWebView), this.state);
     // Returns the node to be displayed
-    return this.textNode.getFrameNode();
+    return this.webNode.getFrameNode();
   }
 }
