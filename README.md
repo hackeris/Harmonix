@@ -4,7 +4,7 @@ Run Linux ELF binary (aarch64 and x86_64) on HarmonyOS PC, inspired by [Termony]
 
 Working in progress.
 
-![Run in HiShell](./docs/images/screen_202508161533.jpg)
+![Run in Harmonix](./docs/images/screen_202508162357.jpg)
 
 # Build
 
