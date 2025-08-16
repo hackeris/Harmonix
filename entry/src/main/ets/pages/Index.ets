@@ -52,6 +52,7 @@ struct Index {
       Divider()
         .height(1)
         .width(FULL_PERCENT)
+        .color('#222222')
         .backgroundColor($r('sys.color.ohos_id_color_subheading_separator_dark'))
 
       Tabs({ barPosition: BarPosition.Start, index: this.focusIndex, controller: this.controller }) {
