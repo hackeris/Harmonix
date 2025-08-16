@@ -1,10 +1,10 @@
 # Harmonix
 
-Run linux elf binary (alpine rootfs also supported) on HarmonyOS PC, inspired by [Termony](https://github.com/TermonyHQ/Termony), based on [harmony-qemu](https://github.com/hackeris/harmony-qemu).
+Run Linux ELF binary (aarch64 and x86_64) on HarmonyOS PC, inspired by [Termony](https://github.com/TermonyHQ/Termony), based on [harmony-qemu](https://github.com/hackeris/harmony-qemu).
 
 Working in progress.
 
-![Run in HiShell](./docs/images/screen_202507192054.png)
+![Run in HiShell](./docs/images/screen_202508161533.jpg)
 
 # Build
 
@@ -18,7 +18,8 @@ To build and install to your device, see [Build Termony on Linux](https://github
 - Open Harmonix or HiShell, and run `harmonix_install_alpine` to install Alpine Linux
 - After Alpine Linux installed, run `harmonix_run_alpine` to start Alpine Linux
 - Run `cd /` cd to `/` and run `ls`, you can see the root changed!
-- Run `uname -a` to display system info.
+- Run `uname -a` to display system info
+- Run `apk` to install packages 
 
 ## x86_64
 
