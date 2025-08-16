@@ -24,10 +24,6 @@ class NativeProxy {
     this.webviewController = webviewController
   }
 
-  propUpdate(key: object, value: object): void {
-    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'propUpdate: ' + key + ", value: " + value);
-  }
-
   sendInput(data: string): void {
     hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'sendInput: ' + data);
     let buffer = stringToArrayBuffer(data, 'utf-8');
@@ -40,31 +36,10 @@ class NativeProxy {
     napi.resize(s.width, s.height)
   }
 
-  focus(): void {
-    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'focus')
-  }
-
-  syncFocus(): void {
-    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'syncFocus')
-  }
-
-  newScrollHeight(h: number): void {
-    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'newScrollHeight: ' + h)
-  }
-
-  newScrollTop(h: number): void {
-    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'newScrollTop: ' + h)
-  }
-
-  openLink(url: string): void {
-    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'openLink: ' + url)
-  }
-
   async load(): Promise<void> {
+
     hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'load')
     this.webviewController.runJavaScript('exports.setFocused(true)')
-
-    const s: Size = await this.getSize();
 
     napi.onData((a: ArrayBuffer) => {
       let dec = util.TextDecoder.create('utf-8', { ignoreBOM: true })
@@ -75,14 +50,14 @@ class NativeProxy {
       this.webviewController.runJavaScript('exports.write("' + s + '")')
     })
 
+    const s: Size = await this.getSize();
     napi.run(s.width, s.height)
   }
 
   private async getSize(): Promise<Size> {
     const ext = await this.webviewController.runJavaScriptExt('exports.getSize()');
     const arr = ext.getArray();
-    const w = arr[0] as number, h = arr[1] as number;
-    return { width: w, height: h };
+    return { width: arr[0] as number, height: arr[1] as number };
   }
 }
 
@@ -111,8 +86,7 @@ struct Index {
         .javaScriptProxy({
           object: this.native,
           name: 'native',
-          methodList: ['propUpdate', 'sendInput', 'resize', 'focus', 'syncFocus',
-            'newScrollHeight', 'newScrollTop', 'openLink', 'load', 'syncFocus'],
+          methodList: ['sendInput', 'resize', 'load'],
           controller: this.webviewController,
           asyncMethodList: [],
           permission: `{

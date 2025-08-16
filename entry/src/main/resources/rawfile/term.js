@@ -39,18 +39,9 @@ function onTerminalReady() {
     term.io.push();
     term.reset();
 
-    let oldProps = {};
-
-    function syncProp(name, value) {
-        if (oldProps[name] !== value) {
-            native.propUpdate(name, value);
-        }
-    }
-
     let decoder = new TextDecoder();
     exports.write = (data) => {
         term.io.writeUTF16(decoder.decode(lib.codec.stringToCodeUnitArray(data)));
-        syncProp('applicationCursor', term.keyboard.applicationCursor);
     };
 
     // hterm size updates native size
@@ -69,13 +60,7 @@ function onTerminalReady() {
             e.stopPropagation();
         }
     }, { capture: true });
-    term.scrollPort_.screen_.addEventListener('mousedown', (e) => {
-        // Taps while there is a selection should be left to the selection view
-        if (document.getSelection().rangeCount != 0) {
-            return;
-        }
-        native.focus();
-    });
+
     exports.setFocused = (focus) => {
         if (focus) {
             term.focus();
@@ -83,8 +68,6 @@ function onTerminalReady() {
             term.blur();
         }
     };
-    term.scrollPort_.screen_.addEventListener('focus', (e) => native.syncFocus());
-
     // Scroll to bottom wrapper
     exports.scrollToBottom = () => term.scrollEnd();
     // Set scroll position
@@ -93,30 +76,6 @@ function onTerminalReady() {
         term.scrollPort_.screen_.scrollTop = y;
         lastScrollTop = term.scrollPort_.screen_.scrollTop;
     };
-
-    // Send scroll height and position to native code
-    let lastScrollHeight, lastScrollTop;
-
-    function syncScroll() {
-        const scrollHeight = parseFloat(term.scrollPort_.scrollArea_.style.height);
-        if (scrollHeight != lastScrollHeight) {
-            native.newScrollHeight(scrollHeight);
-        }
-        lastScrollHeight = scrollHeight;
-
-        const scrollTop = term.scrollPort_.screen_.scrollTop;
-        if (scrollTop != lastScrollTop) {
-            native.newScrollTop(scrollTop);
-        }
-        lastScrollTop = scrollTop;
-    }
-
-    const realSyncScrollHeight = hterm.ScrollPort.prototype.syncScrollHeight;
-    hterm.ScrollPort.prototype.syncScrollHeight = function () {
-        realSyncScrollHeight.call(this);
-        syncScroll();
-    };
-    term.scrollPort_.screen_.addEventListener('scroll', syncScroll);
 
     exports.updateStyle = ({
         foregroundColor,
