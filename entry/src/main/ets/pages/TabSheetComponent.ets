@@ -25,9 +25,11 @@ export struct TabSheets {
             Image($r('app.media.ic_public_cancel_filled'))
               .width(STYLE_CONFIGURATION.ICON_SIZE)
               .aspectRatio(1)
+              .padding(2)
               .onClick(() => {
                 this.closeTabAndTerm(item.id)
               })
+              .hoverEffect(HoverEffect.Highlight)
           }
         }
         .flexShrink(1)
@@ -37,8 +39,7 @@ export struct TabSheets {
         })
         .borderRadius($r('sys.float.ohos_id_corner_radius_default_xs'))
         .height(FULL_PERCENT)
-        .backgroundColor(this.middleIndex === index ? $r('sys.color.ohos_id_color_background') :
-        $r('sys.color.ohos_id_color_sub_background'))
+        .backgroundColor(this.middleIndex === index ? '#222222' : $r('sys.color.ohos_id_color_sub_background'))
         .onClick(() => {
           this.controller.changeIndex(index);
           this.focusIndex = index;
@@ -51,6 +52,13 @@ export struct TabSheets {
               .strokeWidth(STYLE_CONFIGURATION.SEPARATOR_STROKE_WIDTH)
               .height('50%')
               .lineCap(LineCapStyle.Round)
+          } else {
+            Divider()
+              .vertical(true)
+              .strokeWidth(STYLE_CONFIGURATION.SEPARATOR_STROKE_WIDTH)
+              .height('50%')
+              .lineCap(LineCapStyle.Round)
+              .color($r('sys.color.ohos_id_color_background_transparent'))
           }
         }
       }, (item: TermModel) => 'tab-' + item.id.toString())
@@ -58,6 +66,7 @@ export struct TabSheets {
       Image($r('app.media.ic_public_add_filled'))
         .width(STYLE_CONFIGURATION.ICON_SIZE)
         .aspectRatio(1)
+        .padding(2)
         .onClick(() => {
           if (this.tabArray.length < 6) {
 
@@ -73,6 +82,7 @@ export struct TabSheets {
             })
           }
         })
+        .hoverEffect(HoverEffect.Highlight)
     }
     .padding(STYLE_CONFIGURATION.TAB_SHEET_PADDING)
     .backgroundColor($r('sys.color.ohos_id_color_sub_background'))

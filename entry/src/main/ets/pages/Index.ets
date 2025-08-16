@@ -50,6 +50,7 @@ struct Index {
       })
 
       Divider()
+        .height(1)
         .width(FULL_PERCENT)
         .backgroundColor($r('sys.color.ohos_id_color_subheading_separator_dark'))
 
