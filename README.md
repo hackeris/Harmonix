@@ -2,8 +2,6 @@
 
 Run Linux ELF binary (aarch64 and x86_64) on HarmonyOS PC, inspired by [Termony](https://github.com/TermonyHQ/Termony), based on [harmony-qemu](https://github.com/hackeris/harmony-qemu).
 
-Working in progress.
-
 ![Run in Harmonix](./docs/images/screen_202508162357.jpg)
 
 # Build
