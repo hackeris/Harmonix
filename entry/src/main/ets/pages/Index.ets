@@ -59,7 +59,6 @@ struct Index {
           TabContent() {
             Column() {
               NodeContainer(item.view)
-                .id('term-node-' + item.id)
                 .width('100%')
                 .height('100%')
             }
@@ -70,6 +69,7 @@ struct Index {
       .id('tabs')
       .scrollable(false)
       .barHeight(0)
+      .layoutWeight(1)
       .onChange((index: number) => {
         this.focusIndex = index;
       })

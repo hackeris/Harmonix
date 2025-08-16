@@ -26,6 +26,7 @@ export struct TabSheets {
               .width(STYLE_CONFIGURATION.ICON_SIZE)
               .aspectRatio(1)
               .padding(2)
+              .borderRadius(4)
               .onClick(() => {
                 this.closeTabAndTerm(item.id)
               })
@@ -67,6 +68,7 @@ export struct TabSheets {
         .width(STYLE_CONFIGURATION.ICON_SIZE)
         .aspectRatio(1)
         .padding(2)
+        .borderRadius(4)
         .onClick(() => {
           if (this.tabArray.length < 6) {
 
