@@ -1,13 +1,13 @@
-hterm.Terminal.IO.prototype.sendString = function(data) {
+hterm.Terminal.IO.prototype.sendString = function (data) {
     native.sendInput(data);
 };
-hterm.Terminal.IO.prototype.onVTKeystroke = function(data) {
+hterm.Terminal.IO.prototype.onVTKeystroke = function (data) {
     native.sendInput(data);
 };
-hterm.Terminal.IO.prototype.onTerminalResize = function(width, height) {
+hterm.Terminal.IO.prototype.onTerminalResize = function (width, height) {
     native.resize(width, height);
 };
-hterm.ScrollPort.prototype.onTouch = function(e) {
+hterm.ScrollPort.prototype.onTouch = function (e) {
     Object.defineProperty(e, 'defaultPrevented', { value: true });
 };
 
@@ -36,7 +36,7 @@ function onTerminalReady() {
     window.exports = {};
 
     this.setCursorVisible(true);
-    term.io.push();
+    var io = term.io.push();
     term.reset();
 
     let decoder = new TextDecoder();
@@ -105,7 +105,25 @@ function onTerminalReady() {
 
     hterm.openUrl = (url) => native.openLink(url);
 
+    io.print('Welcome to Harmonix! A project to run Linux ELF binary on HarmonyOS.\r\n');
+    io.print('Now aarch64 and x86_64 ELF binary are supported(by harmonix-qemu-aarch64 and harmonix-qemu-x86_64).\r\n');
+    io.print('\r\n');
+    io.print(
+        '     _   _                                  _      \r\n' +
+        '    | | | | __ _ _ __ _ __ ___   ___  _ __ (_)_  __\r\n' +
+        '    | |_| |/ _` | \'__| \'_ ` _ \\ / _ \\| \'_ \\| \\ \\/ /\r\n' +
+        '    |  _  | (_| | |  | | | | | | (_) | | | | |>  < \r\n' +
+        '    |_| |_|\\__,_|_|  |_| |_| |_|\\___/|_| |_|_/_/\\_\\\r\n'
+    )
+    io.print('\r\n');
+    io.print('\r\n');
+    io.print('To install or reinstall Alpine Linux, run `harmonix_install_alpine`.\r\n');
+    io.print('To start Alpine Linux, run `harmonix_run_alpine`.\r\n');
+    io.print('\r\n');
+    io.print('You can also use Harmonix in HiShell. To uninstall from HiShell, run `harmonix_remove_alpine`\r\n');
+    io.print('\r\n');
+    io.print('To customize linux root filesystem or run x86_64, see harmonix_install_alpine and harmonix_run_alpine script.\r\n');
+
     native.load();
     native.syncFocus();
-
 }
