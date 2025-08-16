@@ -17,6 +17,7 @@ window.onload = async function () {
     window.term = new hterm.Terminal();
 
     term.getPrefs().set('cursor-color', '#cccccc');
+    term.getPrefs().set('background-color', '#000000');
     term.getPrefs().set('terminal-encoding', 'iso-2022');
     term.getPrefs().set('enable-resize-status', false);
     term.getPrefs().set('copy-on-select', false);

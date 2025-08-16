@@ -3,6 +3,22 @@
     {
       "name": "page_text_font_size",
       "value": "14fp"
+    },
+    {
+      "name": "margin_vertical_m",
+      "value": "8vp"
+    },
+    {
+      "name": "text_size_headline",
+      "value": "20vp"
+    },
+    {
+      "name": "corner_radius_default_m",
+      "value": "12vp"
+    },
+    {
+      "name": "card_padding_start",
+      "value": "12vp"
     }
   ]
 }

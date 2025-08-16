@@ -19,6 +19,14 @@
     {
       "name": "documents_permission",
       "value": "Access ~/Documents"
+    },
+    {
+      "name": "HandleTabs",
+      "value": "增删页签"
+    },
+    {
+      "name": "newSheet",
+      "value": "新建标签"
     }
   ]
 }

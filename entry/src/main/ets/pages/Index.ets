@@ -1,110 +1,93 @@
-import util from '@ohos.util';
-import { buffer } from '@kit.ArkTS';
 import { webview } from '@kit.ArkWeb';
-import { hilog } from '@kit.PerformanceAnalysisKit';
+import { FULL_PERCENT } from '../model/TabStyle';
+import { TabSheets } from './TabSheetComponent';
+import { TermController } from '../model/TermController';
 import { common } from '@kit.AbilityKit';
-import napi from 'libentry.so';
-
-const DOMAIN = 0x0001;
-
-interface Size {
-  width: number,
-  height: number
-}
-
-function stringToArrayBuffer(str: string, encoding: buffer.BufferEncoding = 'utf-8'): ArrayBuffer {
-  const buf = buffer.from(str, encoding);
-  return buf.buffer;
-}
-
-class NativeProxy {
-  webviewController: webview.WebviewController
-
-  constructor(webviewController: webview.WebviewController) {
-    this.webviewController = webviewController
-  }
-
-  sendInput(data: string): void {
-    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'sendInput: ' + data);
-    let buffer = stringToArrayBuffer(data, 'utf-8');
-    napi.send(buffer)
-  }
-
-  async resize(): Promise<void> {
-    const s = await this.getSize();
-    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'resize: ' + s.width + ", " + s.height)
-    napi.resize(s.width, s.height)
-  }
-
-  async load(): Promise<void> {
-
-    hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'load')
-    this.webviewController.runJavaScript('exports.setFocused(true)')
-
-    napi.onData((a: ArrayBuffer) => {
-      let dec = util.TextDecoder.create('utf-8', { ignoreBOM: true })
-      let s: string = dec.decodeToString(new Uint8Array(a))
-
-      hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'write: ' + s)
-
-      this.webviewController.runJavaScript('exports.write("' + s + '")')
-    })
-
-    const s: Size = await this.getSize();
-    napi.run(s.width, s.height)
-  }
-
-  private async getSize(): Promise<Size> {
-    const ext = await this.webviewController.runJavaScriptExt('exports.getSize()');
-    const arr = ext.getArray();
-    return { width: arr[0] as number, height: arr[1] as number };
-  }
-}
 
 @Entry
 @Component
 struct Index {
-  webviewController: webview.WebviewController = new webview.WebviewController()
-  native: NativeProxy = new NativeProxy(this.webviewController);
+  @State tabArray: Array<TermController> = [new TermController(() => this.closeTab(0))];
+  @State focusIndex: number = 0;
+  private controller: TabsController = new TabsController();
 
   aboutToAppear(): void {
     webview.WebviewController.setWebDebuggingAccess(true)
   }
 
+  closeTab(index: number): void {
+    if (this.tabArray.length > 1) {
+
+      let newArray = Array.from(this.tabArray)
+
+      const removed = newArray.splice(index, 1)[0];
+      removed.shutdown()
+
+      this.tabArray = newArray;
+      if (this.tabArray[index] === undefined) {
+        this.focusIndex = index - 1;
+      } else if (this.tabArray[index] !== undefined && this.focusIndex !== index) {
+        this.focusIndex -= 1;
+      }
+    } else {
+      (this.getUIContext().getHostContext() as common.UIAbilityContext)?.terminateSelf()
+    }
+  }
+
   build() {
     Column() {
-      Web({
-        src: $rawfile('term.html'),
-        controller: this.webviewController
+      TabSheets({
+        tabArray: $tabArray,
+        focusIndex: $focusIndex,
+        closeTab: this.closeTab,
+        controller: this.controller
       })
-        .onPageBegin(() => {
-          napi.onExit(() => {
-            (this.getUIContext().getHostContext() as common.UIAbilityContext)?.terminateSelf()
-            hilog.info(DOMAIN, 'WebTerminal', '%{public}s', 'onExit')
-          })
-        })
-        .javaScriptProxy({
-          object: this.native,
-          name: 'native',
-          methodList: ['sendInput', 'resize', 'load'],
-          controller: this.webviewController,
-          asyncMethodList: [],
-          permission: `{
-  "javascriptProxyPermission": {
-    "urlPermissionList": [
-      {
-        "scheme": "resource",
-        "host": "rawfile",
-        "port": "",
-        "path": ""
+
+      Divider()
+        .width(FULL_PERCENT)
+        .backgroundColor($r('sys.color.ohos_id_color_subheading_separator_dark'))
+
+      Tabs({ barPosition: BarPosition.Start, index: this.focusIndex, controller: this.controller }) {
+        ForEach(this.tabArray, (item: TermController, index: number) => {
+          TabContent() {
+            Column() {
+              Web({
+                src: $rawfile('term.html'),
+                controller: item.webviewController
+              })
+                .javaScriptProxy({
+                  object: item,
+                  name: 'native',
+                  methodList: ['sendInput', 'resize', 'load'],
+                  controller: item.webviewController,
+                  asyncMethodList: [],
+                  permission: `{
+                            "javascriptProxyPermission": {
+                              "urlPermissionList": [
+                                {
+                                  "scheme": "resource",
+                                  "host": "rawfile",
+                                  "port": "",
+                                  "path": ""
+                                }
+                              ]
+                            }
+                          }`
+                })
+                .backgroundColor('#000')
+                .height(FULL_PERCENT)
+            }
+            .height(FULL_PERCENT)
+          }
+        }, (item: TermController) => 'term-' + item.id.toString())
       }
-    ]
-  }
-}`
-        })
-        .backgroundColor('#000')
+      .scrollable(false)
+      .barHeight(0)
+      .onChange((index: number) => {
+        this.focusIndex = index;
+      })
     }
-    .width('100%')
+    .width("100%")
     .height('100%')
   }
 }
