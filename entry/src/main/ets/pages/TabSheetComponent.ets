@@ -1,6 +1,8 @@
 import { FULL_PERCENT, STYLE_CONFIGURATION } from '../model/TabStyle';
 import { TermModel } from '../model/TermModel';
 
+const MAX_TABS = 8
+
 @Component
 export struct TabSheets {
   @Link tabArray: Array<TermModel>;
@@ -64,13 +66,13 @@ export struct TabSheets {
         }
       }, (item: TermModel) => 'tab-' + item.id.toString())
 
-      Image($r('app.media.ic_public_add_filled'))
-        .width(STYLE_CONFIGURATION.ICON_SIZE)
-        .aspectRatio(1)
-        .padding(2)
-        .borderRadius(4)
-        .onClick(() => {
-          if (this.tabArray.length < 6) {
+      if (this.tabArray.length < MAX_TABS) {
+        Image($r('app.media.ic_public_add_filled'))
+          .width(STYLE_CONFIGURATION.ICON_SIZE)
+          .aspectRatio(1)
+          .padding(2)
+          .borderRadius(4)
+          .onClick(() => {
 
             const newArray = Array.from(this.tabArray)
             newArray.push(new TermModel(this.closeTabAndTerm));
@@ -82,9 +84,9 @@ export struct TabSheets {
             this.getUIContext().animateTo({ duration: 200 }, () => {
               this.focusIndex = newTabIndex;
             })
-          }
-        })
-        .hoverEffect(HoverEffect.Highlight)
+          })
+          .hoverEffect(HoverEffect.Highlight)
+      }
     }
     .padding(STYLE_CONFIGURATION.TAB_SHEET_PADDING)
     .backgroundColor($r('sys.color.ohos_id_color_sub_background'))
