@@ -27,7 +27,7 @@ You can also run Linux program of x86_64 on HarmonyOS PC by qemu-harmonix-x86_64
 
 - Download alpine minimal root filesystem from [https://alpinelinux.org/downloads/](https://alpinelinux.org/downloads/), choose "Mini root filesystem" -> "x86_64"  
 - Extract downloaded rootfs tar.gz file to data directory, for example `/data/storage/el2/base/files/alpine_x64`
-- Run qemu-harmonix-x86_64 to load busybox shell with rootfs and environment variables
+- Run `qemu-harmonix-x86_64` to load busybox shell with rootfs and environment variables
 ```shell
 cd /data/storage/el2/base/files/alpine_x64
 qemu-harmonix-x86_64 -E PATH=/bin:/usr/bin:/sbin -E HOME=/root -L ./ ./bin/busybox sh -c 'cd ~ && sh'
