@@ -329,7 +329,7 @@ static napi_value close(napi_env env, napi_callback_info info) {
     auto iterm = terms.find(id);
     if (iterm != terms.end()) {
         
-        OH_LOG_INFO(LOG_APP, "Close, id: %{public}d, (%{public}d, %{public}d)", id);
+        OH_LOG_INFO(LOG_APP, "Close, id: %{public}d", id);
         
         kill(iterm->second.pid, 15);
     }
