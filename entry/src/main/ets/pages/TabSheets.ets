@@ -23,7 +23,6 @@ export struct TabSheets {
             .textOverflow({ overflow: TextOverflow.Clip })
             .maxLines(1)
             .flexShrink(1)
-            .padding({ right: 10 })
           Stack() {
             Image($r('app.media.ic_public_cancel_filled'))
               .width(STYLE_CONFIGURATION.ICON_SIZE)
@@ -36,6 +35,8 @@ export struct TabSheets {
               .hoverEffect(HoverEffect.Highlight)
           }
         }
+        .justifyContent(FlexAlign.SpaceBetween)
+        .width(180)
         .flexShrink(1)
         .padding({
           left: $r('sys.float.ohos_id_elements_margin_horizontal_l'),
