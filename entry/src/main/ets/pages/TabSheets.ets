@@ -23,6 +23,7 @@ export struct TabSheets {
             .textOverflow({ overflow: TextOverflow.Clip })
             .maxLines(1)
             .flexShrink(1)
+            .padding({ right: 10 })
           Stack() {
             Image($r('app.media.ic_public_cancel_filled'))
               .width(STYLE_CONFIGURATION.ICON_SIZE)
@@ -37,33 +38,19 @@ export struct TabSheets {
         }
         .flexShrink(1)
         .padding({
-          left: $r('sys.float.ohos_id_elements_margin_horizontal_m'),
+          left: $r('sys.float.ohos_id_elements_margin_horizontal_l'),
           right: $r('sys.float.ohos_id_elements_margin_horizontal_m')
         })
-        .borderRadius($r('sys.float.ohos_id_corner_radius_default_xs'))
+        .borderRadius({
+          topLeft: $r('sys.float.ohos_id_corner_radius_default_s'),
+          topRight: $r('sys.float.ohos_id_corner_radius_default_s')
+        })
         .height(FULL_PERCENT)
-        .backgroundColor(this.middleIndex === index ? '#222222' : $r('sys.color.ohos_id_color_sub_background'))
+        .backgroundColor(this.middleIndex === index ? $r('sys.color.ohos_id_color_sub_background') : '#333333')
         .onClick(() => {
           this.controller.changeIndex(index);
           this.focusIndex = index;
         })
-
-        Stack() {
-          if (this.middleIndex !== index && this.middleIndex - 1 !== index) {
-            Divider()
-              .vertical(true)
-              .strokeWidth(STYLE_CONFIGURATION.SEPARATOR_STROKE_WIDTH)
-              .height('50%')
-              .lineCap(LineCapStyle.Round)
-          } else {
-            Divider()
-              .vertical(true)
-              .strokeWidth(STYLE_CONFIGURATION.SEPARATOR_STROKE_WIDTH)
-              .height('50%')
-              .lineCap(LineCapStyle.Round)
-              .color($r('sys.color.ohos_id_color_background_transparent'))
-          }
-        }
       }, (item: TermModel) => 'tab-' + item.id.toString())
 
       if (this.tabArray.length < MAX_TABS) {
@@ -88,8 +75,12 @@ export struct TabSheets {
           .hoverEffect(HoverEffect.Highlight)
       }
     }
-    .padding(STYLE_CONFIGURATION.TAB_SHEET_PADDING)
-    .backgroundColor($r('sys.color.ohos_id_color_sub_background'))
+    .padding({
+      left: STYLE_CONFIGURATION.TAB_SHEET_PADDING,
+      right: STYLE_CONFIGURATION.TAB_SHEET_PADDING,
+      top: STYLE_CONFIGURATION.TAB_SHEET_PADDING
+    })
+    .backgroundColor('#333333')
     .width(FULL_PERCENT)
     .height(STYLE_CONFIGURATION.TAB_BAR_HEIGHT)
   }

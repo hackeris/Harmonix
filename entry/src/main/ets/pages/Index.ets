@@ -1,6 +1,6 @@
 import { webview } from '@kit.ArkWeb';
 import { FULL_PERCENT } from '../model/TabStyle';
-import { TabSheets } from './TabSheetComponent';
+import { TabSheets } from './TabSheets';
 import { TermModel } from '../model/TermModel';
 import { common } from '@kit.AbilityKit';
 
@@ -48,12 +48,6 @@ struct Index {
         closeTabAndTerm: id => this.closeTabAndTerm(id),
         controller: this.controller
       })
-
-      Divider()
-        .height(1)
-        .width(FULL_PERCENT)
-        .color('#222222')
-        .backgroundColor($r('sys.color.ohos_id_color_subheading_separator_dark'))
 
       Tabs({ barPosition: BarPosition.Start, index: this.focusIndex, controller: this.controller }) {
         ForEach(this.tabArray, (item: TermModel, index: number) => {
