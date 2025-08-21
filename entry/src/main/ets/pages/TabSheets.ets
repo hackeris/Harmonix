@@ -78,7 +78,7 @@ export struct TabSheets {
     }
     .padding({
       left: STYLE_CONFIGURATION.TAB_SHEET_PADDING,
-      right: STYLE_CONFIGURATION.TAB_SHEET_PADDING,
+      right: STYLE_CONFIGURATION.TAB_SHEET_PADDING + 150,
       top: STYLE_CONFIGURATION.TAB_SHEET_PADDING
     })
     .backgroundColor('#333333')
