@@ -12441,6 +12441,10 @@ hterm.ScrollPort.prototype.paintIframeContents_ = function() {
       '  display: block;' +
       '  height: var(--hterm-charsize-height);' +
       '  line-height: var(--hterm-charsize-height);' +
+      '}' +
+      'x-row::selection {' +
+      '  color: black;' +
+      '  background-color: #cccccc' +
       '}');
   doc.head.appendChild(style);
 
