@@ -41,3 +41,7 @@ qemu-harmonix-x86_64 -E PATH=/bin:/usr/bin:/sbin -E HOME=/root -L ./ ./bin/busyb
 - More external programs from packages works.
 
 ![GCC compiles Hello World](docs/images/screen_202507192010.png)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=hackeris/harmonix&type=Date)](https://www.star-history.com/#hackeris/harmonix&Date)
