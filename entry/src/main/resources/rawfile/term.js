@@ -21,6 +21,7 @@ window.onload = async function () {
     term.getPrefs().set('terminal-encoding', 'iso-2022');
     term.getPrefs().set('enable-resize-status', false);
     term.getPrefs().set('copy-on-select', false);
+    term.getPrefs().set('mouse-right-click-paste', false);
     term.getPrefs().set('enable-clipboard-notice', false);
     term.getPrefs().set('screen-padding-size', 4);
     // Creating and preloading the <audio> element for this sometimes hangs WebKit on iOS 16 for some reason. Can be most easily reproduced by resetting a simulator and starting the app. System logs show Fig hanging while trying to do work.
@@ -44,6 +45,9 @@ function onTerminalReady() {
     exports.write = (data) => {
         term.io.writeUTF16(decoder.decode(lib.codec.stringToCodeUnitArray(data)));
     };
+    exports.paste = (data) => {
+        term.io.sendString(decoder.decode(lib.codec.stringToCodeUnitArray(data)));
+    };
 
     // hterm size updates native size
     exports.getSize = () => [term.screenSize.width, term.screenSize.height];
@@ -52,7 +56,7 @@ function onTerminalReady() {
     term.scrollPort_.screen_.contentEditable = false;
     term.blur();
     term.focus();
-    exports.copy = () => term.copySelectionToClipboard();
+    exports.copy = () => term.getSelectionText();
 
     // focus
     // This listener blocks blur events that come in because the webview has lost first responder
@@ -127,5 +131,4 @@ function onTerminalReady() {
     io.print('To customize linux root filesystem or run x86_64, see harmonix_install_alpine \r\nand harmonix_run_alpine script.\r\n');
 
     native.load();
-    native.syncFocus();
 }
