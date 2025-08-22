@@ -38,7 +38,7 @@ struct WebView {
           })
           .width('100%')
           .align(Alignment.Start)
-          .backgroundColor('#292e2b')
+          .backgroundColor('#292b2e')
       }
     }
     .width('160vp')
