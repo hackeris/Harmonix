@@ -1,0 +1,22 @@
+--- a/crypto/armcap.c	2025-06-09 19:48:43
++++ a/crypto/armcap.c	2025-06-09 19:50:46
+@@ -348,8 +348,8 @@
+         if (getauxval(OSSL_HWCAP) & OSSL_HWCAP_SVE)
+             OPENSSL_armcap_P |= ARMV8_SVE;
+ 
+-        if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_SVE2)
+-            OPENSSL_armcap_P |= ARMV8_SVE2;
++        // if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_SVE2)
++        //     OPENSSL_armcap_P |= ARMV8_SVE2;
+ 
+         if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_RNG)
+             OPENSSL_armcap_P |= ARMV8_RNG;
+@@ -394,7 +394,7 @@
+     }
+ #  ifdef __aarch64__
+     OPENSSL_armcap_P |= arm_probe_for(_armv8_sve_probe, ARMV8_SVE);
+-    OPENSSL_armcap_P |= arm_probe_for(_armv8_sve2_probe, ARMV8_SVE2);
++    // OPENSSL_armcap_P |= arm_probe_for(_armv8_sve2_probe, ARMV8_SVE2);
+     OPENSSL_armcap_P |= arm_probe_for(_armv8_rng_probe, ARMV8_RNG);
+ #  endif
+ 

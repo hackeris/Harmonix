@@ -32,7 +32,12 @@ install_default() {
     mkdir -p "$TMP_DIR"
     cd "$TMP_DIR" || exit 1
     rm -f minirootfs.tar.gz
-    wget "$URL" -O minirootfs.tar.gz
+
+    if which wget >/dev/null 2>&1; then
+        wget "$URL" -O minirootfs.tar.gz
+    else
+        hmx_wget "$URL" -O minirootfs.tar.gz --no-check-certificate
+    fi
 
     mkdir -p "$DIR"
     tar xvf "$TMP_DIR/minirootfs.tar.gz" -C "$DIR"
