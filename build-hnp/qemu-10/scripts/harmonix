@@ -1,0 +1,81 @@
+#!/bin/env sh
+# run in toybox shell
+
+TMP_DIR="/data/storage/el2/base/temp"
+BASE_DIR="/data/storage/el2/base/files"
+
+# get arguments
+OPT="$1"
+DIST="$2"
+[ -z "$DIST" ] && DIST="alpine"
+
+case "$DIST" in
+    alpine)
+        URL="https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/aarch64/alpine-minirootfs-3.22.1-aarch64.tar.gz"
+        DIR="$BASE_DIR/alpine_aarch64"
+        SHELL_CMD="./bin/busybox sh -c"
+        CMD_ARGS="cd ~ && sh"
+        ;;
+    ubuntu)
+        URL="https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.3-base-arm64.tar.gz"
+        DIR="$BASE_DIR/ubuntu_aarch64"
+        SHELL_CMD="./bin/bash -c"
+        CMD_ARGS="cd ~ && bash"
+        ;;
+    *)
+        echo "Unsupported distribution: $DIST"
+        exit 1
+        ;;
+esac
+
+install_default() {
+    mkdir -p "$TMP_DIR"
+    cd "$TMP_DIR" || exit 1
+    rm -f minirootfs.tar.gz
+    wget "$URL" -O minirootfs.tar.gz
+
+    mkdir -p "$DIR"
+    tar xvf "$TMP_DIR/minirootfs.tar.gz" -C "$DIR"
+    echo "$DIST root filesystem installed to $DIR"
+    echo "You can run harmonix run $DIST to start."
+}
+
+run_default() {
+    # if directory $DIR not exists, install it first
+    if [ ! -d "$DIR" ]; then
+        install_default
+    fi
+    cd "$DIR" || exit 1
+    qemu-harmonix-aarch64 -E PATH=/bin:/sbin:/usr/bin -E HOME=/root -L . $SHELL_CMD "$CMD_ARGS"
+}
+
+uninstall_default() {
+    echo "Are you sure you want to remove $DIST root filesystem at $DIR? (y/N)"
+    read -r CONFIRM
+    if [ "$CONFIRM" != "y" ] && [ "$CONFIRM" != "Y" ]; then
+        echo "Uninstall cancelled."
+        exit 0
+    fi
+    if [ -d "$DIR" ]; then
+        rm -rf "$DIR"
+        echo "$DIST root filesystem at $DIR uninstalled."
+    else
+        echo "$DIST root filesystem at $DIR not found."
+    fi
+}
+
+case "$OPT" in
+    run)
+        run_default
+        ;;
+    install)
+        install_default
+        ;;
+    uninstall)
+        uninstall_default
+        ;;
+    *)
+        echo "Usage: $(basename "$0") {run|install|uninstall} [alpine|ubuntu]"
+        exit 1
+        ;;
+esac

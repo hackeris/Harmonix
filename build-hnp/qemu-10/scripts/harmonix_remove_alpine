@@ -1,9 +1,0 @@
-#/bin/env sh
-
-echo 'Will remove alpine root filesystem at /data/storage/el2/base/files/alpine_aarch64'
-echo 'Press any key to continue, or Ctrl+C to break'
-read -n 1 key
-
-rm -rf /data/storage/el2/base/files/alpine_aarch64
-
-echo 'Alpine root filesystem at /data/storage/el2/base/files/alpine_aarch64 has been removed.'
