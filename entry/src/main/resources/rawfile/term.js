@@ -111,7 +111,6 @@ function onTerminalReady() {
     hterm.openUrl = (url) => native.openLink(url);
 
     io.print('Welcome to Harmonix! A project to run Linux ELF binary on HarmonyOS.\r\n');
-    io.print('\r\n');
     io.print(
         '     _   _                                  _      \r\n' +
         '    | | | | __ _ _ __ _ __ ___   ___  _ __ (_)_  __\r\n' +
@@ -120,15 +119,8 @@ function onTerminalReady() {
         '    |_| |_|\\__,_|_|  |_| |_| |_|\\___/|_| |_|_/_/\\_\\\r\n'
     )
     io.print('\r\n');
-    io.print('\r\n');
-    io.print('aarch64/x86_64/riscv64 are supported (by qemu-harmonix-{aarch64,x86_64,riscv64}).\r\n');
-    io.print('\r\n');
-    io.print('To install or reinstall Alpine Linux, run `harmonix_install_alpine`.\r\n');
-    io.print('To start Alpine Linux, run `harmonix_run_alpine`.\r\n');
-    io.print('\r\n');
-    io.print('You can also use Harmonix in HiShell. To uninstall from HiShell, run \r\n`harmonix_remove_alpine`\r\n');
-    io.print('\r\n');
-    io.print('To customize linux root filesystem or run x86_64, see harmonix_install_alpine \r\nand harmonix_run_alpine script.\r\n');
+    io.print('Use `harmonix run` to start.\r\n');
+    io.print('You can also use Harmonix in HiShell.\r\n');
 
     native.load();
 }

@@ -13,8 +13,8 @@ To build and install to your device, see [Build Termony on Linux](https://github
 - Build and sign hap of Harmonix
   - or download unsigned hap from [Release page](https://github.com/hackeris/Harmonix/releases) and sign the hap by your self
 - Install Harmonix to your HarmonyOS PC
-- Open Harmonix or HiShell, and run `harmonix_install_alpine` to install Alpine Linux
-- After Alpine Linux installed, run `harmonix_run_alpine` to start Alpine Linux
+- Open Harmonix or HiShell, and run `harmonix install` to install Alpine Linux
+- After Alpine Linux installed, run `harmonix run` to start Alpine Linux
 - Run `cd /` cd to `/` and run `ls`, you can see the root changed!
 - Run `uname -a` to display system info
 - Run `apk` to install packages 
