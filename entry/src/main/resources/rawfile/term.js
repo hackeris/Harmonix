@@ -120,7 +120,7 @@ function onTerminalReady() {
     )
     io.print('\r\n');
     io.print('Use `harmonix run` to start.\r\n');
-    io.print('You can also use Harmonix in HiShell after run `export LD_LIBRARY_PATH=/data/service/hnp/harmonix.org/harmonix_1.0/lib`.\r\n');
+    io.print('You can also use Harmonix in HiShell.\r\n');
 
     native.load();
 }
