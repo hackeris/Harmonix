@@ -37,7 +37,6 @@ install_default() {
     mkdir -p "$DIR"
     tar xvf "$TMP_DIR/minirootfs.tar.gz" -C "$DIR"
     echo "$DIST root filesystem installed to $DIR"
-    echo "You can run harmonix run $DIST to start."
 }
 
 run_default() {
@@ -71,6 +70,7 @@ case "$OPT" in
         ;;
     install)
         install_default
+        echo "You can run harmonix run $DIST to start."
         ;;
     uninstall)
         uninstall_default
