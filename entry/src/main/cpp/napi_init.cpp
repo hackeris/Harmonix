@@ -202,6 +202,7 @@ static napi_value run(napi_env env, napi_callback_info info) {
                "/data/app/bin:/data/service/hnp/bin:/bin:"
                "/usr/local/bin:/usr/bin:/system/bin:/vendor/bin",
                1);
+        setenv("LD_LIBRARY_PATH", "/data/app/harmonix.org/harmonix_1.0/lib", 1);
 
         chdir(home);
         execl("/bin/sh", "/bin/sh", nullptr);

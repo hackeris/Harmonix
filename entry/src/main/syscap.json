@@ -1,0 +1,17 @@
+{
+  "devices": {
+    "general": [
+      "2in1"
+    ]
+  },
+  "development": {
+    "addedSysCaps": [
+      "SystemCapability.Window.SessionManager"
+    ]
+  },
+  "production": {
+    "addedSysCaps": [
+      "SystemCapability.Window.SessionManager"
+    ]
+  }
+}

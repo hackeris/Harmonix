@@ -29,14 +29,16 @@ export default class EntryAbility extends UIAbility {
       hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
     });
 
-    windowStage.getMainWindow((err: BusinessError, window: window.Window) => {
-      if (err.code) {
-        hilog.error(0x0000, 'testTag', 'Failed to get the main window. Cause: %{public}s', JSON.stringify(err) ?? '');
-        return;
-      }
-      window.setWindowDecorVisible(false);
-      window.setWindowDecorHeight(STYLE_CONFIGURATION.TAB_BAR_HEIGHT);
-    });
+    if (canIUse('SystemCapability.Window.SessionManager')) {
+      windowStage.getMainWindow((err: BusinessError, window: window.Window) => {
+        if (err.code) {
+          hilog.error(0x0000, 'testTag', 'Failed to get the main window. Cause: %{public}s', JSON.stringify(err) ?? '');
+          return;
+        }
+        window.setWindowDecorVisible(false);
+        window.setWindowDecorHeight(STYLE_CONFIGURATION.TAB_BAR_HEIGHT);
+      });
+    }
 
     const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
     await atManager.requestPermissionsFromUser(this.context, ['ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY']);
