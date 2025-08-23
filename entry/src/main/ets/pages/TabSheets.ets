@@ -23,6 +23,7 @@ export struct TabSheets {
             .textOverflow({ overflow: TextOverflow.Clip })
             .maxLines(1)
             .flexShrink(1)
+            .fontColor(Color.White)
           Stack() {
             Image($r('app.media.ic_public_cancel_filled'))
               .width(STYLE_CONFIGURATION.ICON_SIZE)
