@@ -37,6 +37,17 @@ install_default() {
     mkdir -p "$DIR"
     tar xvf "$TMP_DIR/minirootfs.tar.gz" -C "$DIR"
     echo "$DIST root filesystem installed to $DIR"
+
+    case "$DIST" in
+        alpine)
+            ;;
+        ubuntu)
+            # set apt to run as root
+            echo 'APT::Sandbox::User "root";' >> $DIR/etc/apt/apt.conf.d/01-vendor-ubuntu
+            ;;
+        *)
+            ;;
+    esac
 }
 
 run_default() {
