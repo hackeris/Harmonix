@@ -43,6 +43,7 @@ install_default() {
 run_default() {
     # if directory $DIR not exists, install it first
     if [ ! -d "$DIR" ]; then
+        echo "$DIST root filesystem not found at $DIR, installing..."
         install_default
     fi
     cd "$DIR" || exit 1
