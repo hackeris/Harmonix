@@ -1,5 +1,5 @@
 PKGS=zstd \
-    zlib \
+	zlib \
     pcre2 \
 	libglib \
 	qemu-10
@@ -14,9 +14,15 @@ copy: harmonix-public.hnp
 
 harmonix-public.hnp: $(STAMP) Makefile
 	# reduce size
-	rm -rfv sysroot/share/man
-	rm -rfv sysroot/share/doc
-	rm -rfv sysroot/share/info
+	mkdir -p sysroot/bin
+	mkdir -p sysroot/lib
+	cp -r buildroot/lib/libz.so* sysroot/lib/
+	cp -r buildroot/lib/libglib-2.0.so* sysroot/lib/
+	cp -r buildroot/lib/libgmodule-2.0.so* sysroot/lib/
+	cp -r buildroot/lib/libintl.so* sysroot/lib/
+	cp -r buildroot/lib/libpcre2-8.so* sysroot/lib/
+	cp -r buildroot/bin/qemu-* sysroot/bin/
+	cp -r buildroot/bin/harmonix sysroot/bin/
 	# create hnp manually
 	cp hnp.json sysroot
 	rm -f harmonix-public.hnp
