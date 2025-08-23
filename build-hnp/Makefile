@@ -2,8 +2,6 @@ PKGS=zstd \
 	zlib \
 	openssl \
 	libidn2 \
-	c-ares \
-	curl \
 	wget \
     pcre2 \
 	libglib \
@@ -24,21 +22,13 @@ harmonix-public.hnp: $(STAMP) Makefile
 	mkdir -p sysroot/lib
 
 	cp -r buildroot/lib/libz.so* sysroot/lib/
-	cp -r buildroot/lib/libglib-2.0.so* sysroot/lib/
-	cp -r buildroot/lib/libgmodule-2.0.so* sysroot/lib/
-	cp -r buildroot/lib/libintl.so* sysroot/lib/
-	cp -r buildroot/lib/libpcre2-8.so* sysroot/lib/
 	cp -r buildroot/lib/libssl.so* sysroot/lib/
-	cp -r buildroot/lib/libcares.so* sysroot/lib/
 	cp -r buildroot/lib/libidn2.so* sysroot/lib/
 	cp -r buildroot/lib/libcrypto.so* sysroot/lib/
 
 	cp -r buildroot/bin/wget sysroot/bin/hmx_wget
 	cp -r buildroot/bin/harmonix sysroot/bin/
 	cp -r buildroot/bin/qemu-* sysroot/bin/
-
-	# cp -r buildroot/lib/libcurl.so* sysroot/lib/
-	# cp -r buildroot/bin/curl sysroot/bin/hmx_curl
 
 	# create hnp manually
 	cp hnp.json sysroot
