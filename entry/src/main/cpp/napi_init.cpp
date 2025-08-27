@@ -14,10 +14,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <termios.h>
 #include <unistd.h>
 #include <vector>
+
+#include "rsyscall.h"
 
 #include "hilog/log.h"
 
@@ -203,6 +206,7 @@ static napi_value run(napi_env env, napi_callback_info info) {
                "/usr/local/bin:/usr/bin:/system/bin:/vendor/bin",
                1);
         setenv("LD_LIBRARY_PATH", "/data/app/harmonix.org/harmonix_1.0/lib", 1);
+        setenv("RCALL_SOCKET", "/data/storage/el1/base/tmp/rsyscall.sock", 1);
 
         chdir(home);
         execl("/bin/sh", "/bin/sh", nullptr);
@@ -346,6 +350,12 @@ static napi_value Init(napi_env env, napi_value exports) {
         {"send", nullptr, send, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"close", nullptr, close, nullptr, nullptr, nullptr, napi_default, nullptr}};
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
+    
+    mkdir("/data/storage/el1/base/tmp", 0755);
+    
+    pthread_t thread_rsyscall;
+    pthread_create(&thread_rsyscall, nullptr, start_server, (void*)"/data/storage/el1/base/tmp/rsyscall.sock");
+    
     return exports;
 }
 EXTERN_C_END
