@@ -1,0 +1,1 @@
+qemu-system-aarch64 -machine virt -cpu cortex-a53 -smp 1 -m 1G -kernel Image -drive if=none,format=raw,file=rootfs.img,id=hd0 -device virtio-blk-device,drive=hd0 -append "root=/dev/vda rw rootfstype=ext4 console=ttyAMA0" -nographic

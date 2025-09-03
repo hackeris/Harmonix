@@ -1,0 +1,1 @@
+qemu-system-x86_64 -kernel bzImage -initrd initramfs-busybox-x86.cpio.gz -nographic -append "console=ttyS0"
